@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEO Chatbot — Workshop Review</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --navy: #0a1628;
+  --navy-mid: #112240;
+  --navy-light: #1d3461;
+  --gold: #c9a84c;
+  --gold-light: #f0c96a;
+  --red: #e63946;
+  --orange: #f4a261;
+  --green: #52b788;
+  --blue: #4895ef;
+  --white: #f8f9fa;
+  --muted: #8892a4;
+  --border: rgba(201,168,76,0.2);
+  --font: 'Sora', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font);
+  background: var(--navy);
+  color: var(--white);
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ── HERO ── */
+.hero {
+  position: relative;
+  padding: 80px 60px 60px;
+  border-bottom: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -120px; right: -120px;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(201,168,76,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.workshop-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: var(--gold);
+  border: 1px solid var(--border);
+  padding: 6px 14px;
+  border-radius: 2px;
+  margin-bottom: 28px;
+  text-transform: uppercase;
+}
+
+.workshop-tag::before {
+  content: '';
+  width: 6px; height: 6px;
+  background: var(--gold);
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.hero h1 {
+  font-size: clamp(32px, 5vw, 52px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin-bottom: 16px;
+}
+
+.hero h1 span { color: var(--gold); }
+
+.hero .subtitle {
+  font-size: 15px;
+  color: var(--muted);
+  max-width: 560px;
+  font-weight: 300;
+}
+
+.hero-meta {
+  display: flex;
+  gap: 32px;
+  margin-top: 40px;
+  padding-top: 32px;
+  border-top: 1px solid var(--border);
+}
+
+.meta-item { display: flex; flex-direction: column; gap: 4px; }
+.meta-label { font-size: 11px; font-family: var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+.meta-value { font-size: 14px; font-weight: 500; }
+
+/* ── SECTIONS ── */
+section {
+  padding: 64px 60px;
+  border-bottom: 1px solid var(--border);
+}
+
+.section-header {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.section-num {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--gold);
+  letter-spacing: 0.1em;
+}
+
+.section-title {
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* ── FLOW ── */
+.flow-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  max-width: 680px;
+}
+
+.flow-node {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  align-items: start;
+  width: 100%;
+  animation: fadeIn 0.5s ease both;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.flow-node:nth-child(1) { animation-delay: 0.1s; }
+.flow-node:nth-child(3) { animation-delay: 0.2s; }
+.flow-node:nth-child(5) { animation-delay: 0.3s; }
+.flow-node:nth-child(7) { animation-delay: 0.4s; }
+.flow-node:nth-child(9) { animation-delay: 0.5s; }
+.flow-node:nth-child(11) { animation-delay: 0.6s; }
+.flow-node:nth-child(13) { animation-delay: 0.7s; }
+
+.flow-label-col {
+  padding-top: 14px;
+  padding-right: 16px;
+  text-align: right;
+}
+
+.status-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-family: var(--mono);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  padding: 4px 10px;
+  border-radius: 2px;
+  text-transform: uppercase;
+}
+
+.badge-happy { background: rgba(82,183,136,0.15); color: var(--green); border: 1px solid rgba(82,183,136,0.3); }
+.badge-low { background: rgba(244,162,97,0.15); color: var(--orange); border: 1px solid rgba(244,162,97,0.3); }
+.badge-fail { background: rgba(230,57,70,0.15); color: var(--red); border: 1px solid rgba(230,57,70,0.3); }
+.badge-fix { background: rgba(72,149,239,0.15); color: var(--blue); border: 1px solid rgba(72,149,239,0.3); }
+
+.flow-content-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.flow-card {
+  background: var(--navy-mid);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 6px;
+  padding: 14px 18px;
+  position: relative;
+}
+
+.flow-card.is-happy { border-left: 3px solid var(--green); }
+.flow-card.is-low { border-left: 3px solid var(--orange); }
+.flow-card.is-fail { border-left: 3px solid var(--red); }
+.flow-card.is-fix { border-left: 3px solid var(--blue); }
+
+.flow-card .query {
+  font-size: 13px;
+  color: var(--muted);
+  font-family: var(--mono);
+  margin-bottom: 6px;
+}
+
+.flow-card .response {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--white);
+}
+
+.flow-card .insight {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--muted);
+  font-style: italic;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.flow-card.highlight-fail {
+  border: 1px solid rgba(230,57,70,0.4);
+  border-left: 3px solid var(--red);
+  background: rgba(230,57,70,0.05);
+}
+
+.connector {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-height: 28px;
+}
+
+.connector-gap { width: 120px; flex-shrink: 0; }
+
+.connector-line {
+  width: 2px;
+  background: linear-gradient(to bottom, rgba(255,255,255,0.08), rgba(255,255,255,0.03));
+  margin-left: 18px;
+  position: relative;
+}
+
+.connector-line::after {
+  content: '▼';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 8px;
+  color: rgba(255,255,255,0.2);
+}
+
+/* ── ANALYSIS GRID ── */
+.analysis-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.analysis-card {
+  background: var(--navy-mid);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 6px;
+  padding: 20px;
+}
+
+.analysis-card .ac-label {
+  font-size: 10px;
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 8px;
+}
+
+.analysis-card .ac-value {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.analysis-card .ac-desc {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.ac-green .ac-label { color: var(--green); }
+.ac-green .ac-value { color: var(--green); }
+.ac-orange .ac-label { color: var(--orange); }
+.ac-orange .ac-value { color: var(--orange); }
+.ac-red .ac-label { color: var(--red); }
+.ac-red .ac-value { color: var(--red); }
+
+/* ── PATH YẾU ── */
+.path-container {
+  display: grid;
+  grid-template-columns: 1fr 60px 1fr;
+  gap: 0;
+  align-items: start;
+  max-width: 860px;
+}
+
+.path-col { display: flex; flex-direction: column; gap: 12px; }
+
+.path-header {
+  font-size: 11px;
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+
+.path-header.as-is { color: var(--red); }
+.path-header.to-be { color: var(--green); }
+
+.path-step {
+  background: var(--navy-mid);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 6px;
+  padding: 14px 16px;
+  font-size: 13px;
+  position: relative;
+}
+
+.path-step.bad {
+  border-left: 3px solid var(--red);
+  background: rgba(230,57,70,0.04);
+}
+
+.path-step.good {
+  border-left: 3px solid var(--green);
+  background: rgba(82,183,136,0.04);
+}
+
+.path-step .step-label {
+  font-size: 10px;
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 6px;
+}
+
+.path-step.bad .step-label { color: var(--red); }
+.path-step.good .step-label { color: var(--green); }
+
+.path-step .step-text { color: var(--white); line-height: 1.5; }
+.path-step .step-sub { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+.path-arrow-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-top: 60px;
+  gap: 24px;
+}
+
+.arrow-symbol {
+  font-size: 20px;
+  color: var(--gold);
+  line-height: 1;
+}
+
+/* ── DECISION ── */
+.decision-box {
+  background: linear-gradient(135deg, rgba(201,168,76,0.08), rgba(201,168,76,0.03));
+  border: 1px solid rgba(201,168,76,0.3);
+  border-radius: 8px;
+  padding: 32px 36px;
+  max-width: 720px;
+  position: relative;
+  overflow: hidden;
+}
+
+.decision-box::before {
+  content: '"';
+  position: absolute;
+  top: -10px; left: 24px;
+  font-size: 100px;
+  color: rgba(201,168,76,0.12);
+  font-family: Georgia, serif;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.decision-label {
+  font-size: 10px;
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--gold);
+  margin-bottom: 16px;
+}
+
+.decision-text {
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.6;
+  letter-spacing: -0.01em;
+}
+
+.decision-text strong { color: var(--gold); font-weight: 600; }
+
+/* ── MOCKUP CHAT ── */
+.mockup-wrapper {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  max-width: 860px;
+}
+
+.mockup-phone {
+  background: var(--navy-mid);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.phone-header {
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.phone-avatar {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, #0a4fa3, #1d3461);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.phone-name { font-size: 13px; font-weight: 600; }
+.phone-status { font-size: 11px; color: var(--muted); }
+
+.phone-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; min-height: 340px; }
+
+.chat-bubble {
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.chat-bubble.user {
+  align-self: flex-end;
+  background: #1d3461;
+  border-bottom-right-radius: 3px;
+}
+
+.chat-bubble.bot {
+  align-self: flex-start;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-bottom-left-radius: 3px;
+}
+
+.chat-bubble.bot.bad { border-color: rgba(230,57,70,0.3); }
+.chat-bubble.bot.good { border-color: rgba(82,183,136,0.2); background: rgba(82,183,136,0.04); }
+
+.quick-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.quick-btn {
+  font-size: 11px;
+  padding: 5px 10px;
+  border: 1px solid rgba(72,149,239,0.4);
+  border-radius: 12px;
+  color: var(--blue);
+  background: rgba(72,149,239,0.06);
+  cursor: pointer;
+  font-family: var(--font);
+}
+
+.handoff-card {
+  background: rgba(82,183,136,0.08);
+  border: 1px solid rgba(82,183,136,0.25);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 12px;
+  align-self: flex-start;
+  max-width: 90%;
+}
+
+.handoff-card .hc-title {
+  font-weight: 600;
+  color: var(--green);
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.handoff-card .hc-detail { color: var(--muted); line-height: 1.5; }
+
+.mockup-label {
+  font-size: 11px;
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 12px;
+}
+
+.mockup-label.bad { color: var(--red); }
+.mockup-label.good { color: var(--green); }
+
+/* ── FOOTER ── */
+footer {
+  padding: 32px 60px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.footer-tag {
+  font-size: 12px;
+  font-family: var(--mono);
+  color: var(--muted);
+}
+
+.footer-mark {
+  font-size: 12px;
+  color: var(--gold);
+  font-family: var(--mono);
+}
+
+/* RESPONSIVE */
+@media (max-width: 720px) {
+  .hero, section { padding: 48px 24px; }
+  .analysis-grid { grid-template-columns: 1fr; }
+  .path-container { grid-template-columns: 1fr; }
+  .path-arrow-col { display: none; }
+  .mockup-wrapper { grid-template-columns: 1fr; }
+  .hero-meta { flex-wrap: wrap; gap: 20px; }
+  footer { flex-direction: column; gap: 12px; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="workshop-tag">Workshop cá nhân · Mổ sản phẩm AI thật</div>
+  <h1>Vietnam Airlines <span>NEO</span><br>— Review & Fix</h1>
+  <p class="subtitle">Phân tích user flow as-is, xác định path yếu nhất, đề xuất to-be dựa trên session test thực tế.</p>
+  <div class="hero-meta">
+    <div class="meta-item">
+      <span class="meta-label">App</span>
+      <span class="meta-value">Vietnam Airlines NEO</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Số câu test</span>
+      <span class="meta-value">6 queries</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Path yếu nhất</span>
+      <span class="meta-value" style="color:var(--red)">Đổi tên vé OTA</span>
+    </div>
+    <div class="meta-item">
+      <span class="meta-label">Output</span>
+      <span class="meta-value">1 product decision</span>
+    </div>
+  </div>
+</div>
+
+<!-- FLOW AS-IS -->
+<section>
+  <div class="section-header">
+    <span class="section-num">01</span>
+    <span class="section-title">User flow as-is — 6 queries thực tế</span>
+  </div>
+
+  <div class="flow-wrapper">
+
+    <!-- Node 1 -->
+    <div class="flow-node">
+      <div class="flow-label-col"><span class="status-badge badge-happy">😊 happy</span></div>
+      <div class="flow-content-col">
+        <div class="flow-card is-happy">
+          <div class="query">User → "Hành lý xách tay được mang bao nhiêu kg?"</div>
+          <div class="response">Bot trả lời đầy đủ theo hạng ghế, hành trình, trẻ em — có số liệu cụ thể.</div>
+          <div class="insight">✓ Đây là FAQ chuẩn — dữ liệu tĩnh, bot xử lý tốt.</div>
+        </div>
+      </div>
+    </div>
+    <div class="connector"><div class="connector-gap"></div><div class="connector-line"></div></div>
+
+    <!-- Node 2 -->
+    <div class="flow-node">
+      <div class="flow-label-col"><span class="status-badge badge-happy">😊 happy</span></div>
+      <div class="flow-content-col">
+        <div class="flow-card is-happy">
+          <div class="query">User → "Làm thủ tục online trước mấy tiếng?"</div>
+          <div class="response">Bot trả lời chính xác: từ 24 giờ đến 1 giờ trước giờ bay.</div>
+          <div class="insight">✓ Thông tin một chiều, rõ ràng — bot không cần clarify.</div>
+        </div>
+      </div>
+    </div>
+    <div class="connector"><div class="connector-gap"></div><div class="connector-line"></div></div>
+
+    <!-- Node 3 -->
+    <div class="flow-node">
+      <div class="flow-label-col"><span class="status-badge badge-low">😕 low-conf</span></div>
+      <div class="flow-content-col">
+        <div class="flow-card is-low">
+          <div class="query">User → "Tôi muốn đổi ngày bay thì làm thế nào?"</div>
+          <div class="response">Bot trả lời 3 nhánh: đổi không tự nguyện / tự nguyện / đã check-in. User phải tự xác định mình thuộc case nào.</div>
+          <div class="insight">⚠ Bot không hỏi ngược lại context của user — trả lời dài, user tự tìm đường.</div>
+        </div>
+      </div>
+    </div>
+    <div class="connector"><div class="connector-gap"></div><div class="connector-line"></div></div>
+
+    <!-- Node 4 -->
+    <div class="flow-node">
+      <div class="flow-label-col"><span class="status-badge badge-low">😕 low-conf</span></div>
+      <div class="flow-content-col">
+        <div class="flow-card is-low">
+          <div class="query">User → "Vé Eco tôi có được hoàn tiền không?"</div>
+          <div class="response">Bot không trả lời được trực tiếp — hướng user đi kiểm tra điều kiện vé tại nhiều nơi khác nhau.</div>
+          <div class="insight">⚠ Câu hỏi có thể trả lời bằng Yes/No + điều kiện, nhưng bot né bằng cách redirect.</div>
+        </div>
+      </div>
+    </div>
+    <div class="connector"><div class="connector-gap"></div><div class="connector-line"></div></div>
+
+    <!-- Node 5 — FAIL -->
+    <div class="flow-node">
+      <div class="flow-label-col"><span class="status-badge badge-fail">❌ failure</span></div>
+      <div class="flow-content-col">
+        <div class="flow-card highlight-fail">
+          <div class="query">User → "Tôi đặt vé qua bên thứ 3, muốn đổi tên thì liên hệ ai?"</div>
+          <div class="response">"Vui lòng liên hệ trực tiếp với nơi đã mua vé để được hỗ trợ."</div>
+          <div class="insight">❌ Hard failure — bot bỏ cuộc hoàn toàn. Không có số điện thoại, không có link OTA, không có bước tiếp theo. User kẹt.</div>
+        </div>
+      </div>
+    </div>
+    <div class="connector"><div class="connector-gap"></div><div class="connector-line"></div></div>
+
+    <!-- Node 6 -->
+    <div class="flow-node">
+      <div class="flow-label-col"><span class="status-badge badge-low">😕 low-conf</span></div>
+      <div class="flow-content-col">
+        <div class="flow-card is-low">
+          <div class="query">User → "Chuyến bay bị delay 4 tiếng, tôi được bồi thường gì?"</div>
+          <div class="response">Bot trả lời đầy đủ nhưng không có nút hành động — user phải tự copy link, tự gửi văn bản trong 90 ngày.</div>
+          <div class="insight">⚠ Thông tin đúng nhưng không dẫn action. User đọc xong vẫn không biết bắt đầu từ đâu.</div>
+        </div>
+      </div>
+    </div>
+    <div class="connector"><div class="connector-gap"></div><div class="connector-line"></div></div>
+
+    <!-- Node 7 -->
+    <div class="flow-node">
+      <div class="flow-label-col"><span class="status-badge badge-low">😕 low-conf</span></div>
+      <div class="flow-content-col">
+        <div class="flow-card is-low">
+          <div class="query">User → "Tôi bị mất hành lý ký gửi, giờ phải làm gì?"</div>
+          <div class="response">Bot có hướng dẫn 4 bước, link Worldtracer — nhưng link raw, không có nút bấm, không có form tích hợp.</div>
+          <div class="insight">⚠ Thông tin tốt nhưng UX kém — user trong trạng thái stress, cần action ngay, không cần đọc 4 bước.</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ANALYSIS -->
+<section>
+  <div class="section-header">
+    <span class="section-num">02</span>
+    <span class="section-title">Phân tích tổng quan</span>
+  </div>
+
+  <div class="analysis-grid">
+    <div class="analysis-card ac-green">
+      <div class="ac-label">😊 Happy path</div>
+      <div class="ac-value">2 / 6</div>
+      <div class="ac-desc">Câu hỏi tĩnh, có dữ liệu rõ ràng — bot xử lý tốt</div>
+    </div>
+    <div class="analysis-card ac-orange">
+      <div class="ac-label">😕 Low-confidence</div>
+      <div class="ac-value">3 / 6</div>
+      <div class="ac-desc">Bot trả lời nhưng không dẫn action — user phải tự tìm đường tiếp</div>
+    </div>
+    <div class="analysis-card ac-red">
+      <div class="ac-label">❌ Hard failure</div>
+      <div class="ac-value">1 / 6</div>
+      <div class="ac-desc">Bot bỏ cuộc hoàn toàn — không handoff đúng cách</div>
+    </div>
+  </div>
+
+  <div style="background: var(--navy-mid); border: 1px solid rgba(255,255,255,0.07); border-radius: 6px; padding: 20px 24px; max-width: 600px;">
+    <div style="font-size: 11px; font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 12px;">Pattern chính</div>
+    <div style="display: flex; flex-direction: column; gap: 10px; font-size: 14px;">
+      <div>📌 NEO giỏi trả lời <strong>thông tin tĩnh</strong> (policy, số liệu) nhưng yếu ở <strong>thông tin phụ thuộc context</strong> của user.</div>
+      <div>📌 Bot không bao giờ <strong>hỏi ngược lại</strong> để xác định case — luôn dump hết tất cả nhánh.</div>
+      <div>📌 Khi không giải quyết được, bot <strong>không handoff có structure</strong> — chỉ nói "liên hệ nơi mua vé".</div>
+    </div>
+  </div>
+</section>
+
+<!-- PATH YẾU + TO-BE -->
+<section>
+  <div class="section-header">
+    <span class="section-num">03</span>
+    <span class="section-title">Path yếu nhất — As-is → To-be</span>
+  </div>
+
+  <div style="margin-bottom: 28px; padding: 14px 18px; background: rgba(230,57,70,0.07); border: 1px solid rgba(230,57,70,0.25); border-radius: 6px; max-width: 580px;">
+    <div style="font-size: 11px; font-family: var(--mono); color: var(--red); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px;">Path được chọn để sửa</div>
+    <div style="font-size: 15px; font-weight: 500;">User đặt vé qua OTA → muốn đổi tên → hỏi NEO</div>
+    <div style="font-size: 13px; color: var(--muted); margin-top: 4px;">Lý do: Hard failure duy nhất. Bot không trả lời được mà cũng không handoff đúng.</div>
+  </div>
+
+  <div class="path-container">
+    <!-- AS-IS -->
+    <div class="path-col">
+      <div class="path-header as-is">AS-IS — hiện tại</div>
+
+      <div class="path-step bad">
+        <div class="step-label">User hỏi</div>
+        <div class="step-text">"Tôi đặt vé qua Traveloka, muốn đổi tên thì liên hệ ai?"</div>
+      </div>
+
+      <div class="path-step bad">
+        <div class="step-label">Bot nhận ra không giải quyết được</div>
+        <div class="step-text">"Vui lòng liên hệ trực tiếp với nơi đã mua vé để được hỗ trợ."</div>
+        <div class="step-sub">→ Không có số hotline OTA, không có link, không có bước tiếp theo.</div>
+      </div>
+
+      <div class="path-step bad">
+        <div class="step-label">User kẹt</div>
+        <div class="step-text">User phải tự Google "Traveloka đổi tên vé". Mất context, mất tin tưởng vào NEO.</div>
+      </div>
+
+      <div class="path-step bad">
+        <div class="step-label">Kết quả</div>
+        <div class="step-text">User bỏ chat. Tỷ lệ chuyển sang gọi hotline Vietnam Airlines tăng — sai kênh, tốn chi phí.</div>
+      </div>
+    </div>
+
+    <!-- ARROW -->
+    <div class="path-arrow-col">
+      <div class="arrow-symbol">→</div>
+    </div>
+
+    <!-- TO-BE -->
+    <div class="path-col">
+      <div class="path-header to-be">TO-BE — đề xuất</div>
+
+      <div class="path-step good">
+        <div class="step-label">User hỏi</div>
+        <div class="step-text">"Tôi đặt vé qua Traveloka, muốn đổi tên thì liên hệ ai?"</div>
+      </div>
+
+      <div class="path-step good">
+        <div class="step-label">Bot clarify (hỏi lại)</div>
+        <div class="step-text">Bot hỏi: "Bạn có nhớ tên OTA / đại lý đã mua không? (ví dụ: Traveloka, Booking, đại lý...)?"</div>
+        <div class="step-sub">→ Detect keyword OTA từ câu hỏi → tự điền nếu user đã nói.</div>
+      </div>
+
+      <div class="path-step good">
+        <div class="step-label">Bot handoff có structure</div>
+        <div class="step-text">Bot hiển thị card: hotline Traveloka, link deep đến trang đổi tên, + lưu ý "đổi tên qua OTA phải có phí của cả OTA lẫn hãng bay".</div>
+        <div class="step-sub">→ Nếu OTA không xác định: hiện hotline Vietnam Airlines + hướng dẫn cần có booking code.</div>
+      </div>
+
+      <div class="path-step good">
+        <div class="step-label">Correction log</div>
+        <div class="step-text">Cuối card: "Thông tin này có hữu ích không?" → thumbs up/down → log để cải thiện OTA database.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MOCKUP -->
+<section>
+  <div class="section-header">
+    <span class="section-num">04</span>
+    <span class="section-title">Sketch giao diện — before & after</span>
+  </div>
+
+  <div class="mockup-wrapper">
+    <!-- BEFORE -->
+    <div>
+      <div class="mockup-label bad">Before — as-is</div>
+      <div class="mockup-phone">
+        <div class="phone-header">
+          <div class="phone-avatar">N</div>
+          <div>
+            <div class="phone-name">NEO</div>
+            <div class="phone-status">Trợ lý ảo Vietnam Airlines</div>
+          </div>
+        </div>
+        <div class="phone-body">
+          <div class="chat-bubble user">Tôi đặt vé qua Traveloka, muốn đổi tên thì liên hệ ai?</div>
+          <div class="chat-bubble bot bad">Vì quý khách đặt vé qua bên thứ ba, quý khách vui lòng liên hệ trực tiếp với nơi đã mua vé để được hỗ trợ thực hiện việc đổi tên.</div>
+          <div style="align-self: flex-start; font-size: 11px; color: var(--red); font-family: var(--mono); padding: 4px 0;">← Kẹt. Không có bước tiếp theo.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AFTER -->
+    <div>
+      <div class="mockup-label good">After — to-be</div>
+      <div class="mockup-phone">
+        <div class="phone-header">
+          <div class="phone-avatar" style="background: linear-gradient(135deg, #1d6a3a, #0f4a2a);">N</div>
+          <div>
+            <div class="phone-name">NEO</div>
+            <div class="phone-status">Trợ lý ảo Vietnam Airlines</div>
+          </div>
+        </div>
+        <div class="phone-body">
+          <div class="chat-bubble user">Tôi đặt vé qua Traveloka, muốn đổi tên thì liên hệ ai?</div>
+          <div class="chat-bubble bot good">Mình đã xác định bạn đặt qua <strong>Traveloka</strong>. Việc đổi tên cần thực hiện qua họ trước — đây là thông tin liên hệ:</div>
+          <div class="handoff-card">
+            <div class="hc-title">📞 Traveloka Việt Nam</div>
+            <div class="hc-detail">
+              Hotline: <strong>1800 1120</strong> (miễn phí)<br>
+              Hoặc vào app → Đặt chỗ → Đổi tên hành khách<br>
+              <span style="color: var(--orange); font-size: 11px; margin-top: 4px; display: block;">⚠ Phí đổi tên gồm: phí Traveloka + phí Vietnam Airlines</span>
+            </div>
+          </div>
+          <div class="quick-actions">
+            <span class="quick-btn">👍 Hữu ích</span>
+            <span class="quick-btn">👎 Chưa đúng</span>
+            <span class="quick-btn">Hỏi thêm</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRODUCT DECISION -->
+<section>
+  <div class="section-header">
+    <span class="section-num">05</span>
+    <span class="section-title">Product decision</span>
+  </div>
+
+  <div class="decision-box">
+    <div class="decision-label">Output · 1 câu quyết định</div>
+    <div class="decision-text">
+      Khi user hỏi về vé đặt qua OTA, NEO phải <strong>detect tên OTA từ câu hỏi</strong> và trả về <strong>handoff card có cấu trúc</strong> — gồm hotline, link deep, và cảnh báo phí kép — thay vì chỉ nói "liên hệ nơi mua vé", vì câu đó không giúp user tiến thêm được bước nào.
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span class="footer-tag">Workshop cá nhân · Vietnam Airlines NEO · 2025</span>
+  <span class="footer-mark">app → flow → path yếu → sửa</span>
+</footer>
+
+</body>
+</html>
