@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Báo cáo Phân tích UX & Tối ưu hóa Sản phẩm AI - MoMo Moni</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        momo: {
+                            50: '#fff0f6',
+                            100: '#ffdeeb',
+                            200: '#fbc3db',
+                            500: '#ec008c',
+                            600: '#d10074',
+                            700: '#b0005e',
+                            900: '#4a0029',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .flow-step-active {
+            animation: pulse-border 2s infinite;
+        }
+        @keyframes pulse-border {
+            0%, 100% { border-color: rgba(236, 0, 140, 0.4); }
+            50% { border-color: rgba(236, 0, 140, 1); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 min-h-screen">
+
+    <!-- Top Navigation Bar -->
+    <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-momo-500 rounded-xl flex items-center justify-center text-white font-bold text-lg shadow-md shadow-momo-200">
+                    M
+                </div>
+                <div>
+                    <h1 class="text-base font-bold text-gray-900 leading-tight">MoMo Moni</h1>
+                    <p class="text-xs text-gray-500">Báo cáo Phân tích & Tối ưu UX AI</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-momo-100 text-momo-700">
+                    Phiên bản 1.0
+                </span>
+                <span class="text-xs text-gray-400">|</span>
+                <span class="text-xs text-gray-500 font-medium">03/06/2026</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Dashboard Header Hero -->
+        <div class="bg-gradient-to-r from-momo-900 to-purple-900 rounded-3xl p-6 sm:p-10 text-white mb-8 shadow-xl relative overflow-hidden">
+            <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-momo-500/20 rounded-full blur-3xl"></div>
+            <div class="absolute -left-10 -top-10 w-64 h-64 bg-purple-500/10 rounded-full blur-3xl"></div>
+            
+            <div class="relative z-10">
+                <span class="bg-momo-500 text-white text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">UX & Analytics Audit</span>
+                <h2 class="text-2xl sm:text-4xl font-extrabold mt-4 mb-2 tracking-tight">TỐI ƯU HÓA TRẢI NGHIỆM TRỢ LÝ AI</h2>
+                <p class="text-momo-100 text-sm sm:text-base max-w-2xl font-light">
+                    Mổ xẻ luồng tương tác thực tế của Moni nhằm chuyển đổi từ một Chatbot trả lời thông tin đơn thuần sang Trợ lý hành động thông minh (Action-Oriented AI Assistant).
+                </p>
+                
+                <div class="mt-6 flex flex-wrap gap-4 text-xs text-momo-200 border-t border-white/10 pt-6">
+                    <div class="flex items-center"><i data-lucide="user" class="w-4 h-4 mr-1.5 text-momo-500"></i> Đánh giá bởi: Nhân Khánh Đinh & Trần Hoàng Nam</div>
+                    <div class="flex items-center"><i data-lucide="target" class="w-4 h-4 mr-1.5 text-momo-500"></i> Đối tượng: MoMo Moni App</div>
+                    <div class="flex items-center"><i data-lucide="clock" class="w-4 h-4 mr-1.5 text-momo-500"></i> Cập nhật: 03/06/2026</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 1: Empathy & Testing -->
+        <section class="mb-10">
+            <div class="flex items-center space-x-3 mb-6">
+                <div class="p-2 bg-momo-100 rounded-lg text-momo-600">
+                    <i data-lucide="activity" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900">1. Tổng quan trải nghiệm (Empathy & Testing)</h3>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Happy Path (Điểm sáng) -->
+                <div class="bg-white rounded-2xl border border-emerald-100 p-6 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-emerald-50">
+                        <div class="flex items-center space-x-2 text-emerald-600">
+                            <i data-lucide="check-circle" class="w-5 h-5"></i>
+                            <h4 class="font-bold text-gray-900">Điểm sáng Trải nghiệm (Happy Path)</h4>
+                        </div>
+                        <span class="bg-emerald-50 text-emerald-700 text-xs font-semibold px-2.5 py-1 rounded-full">Đạt yêu cầu</span>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <!-- Card Point 1 -->
+                        <div class="flex items-start space-x-3">
+                            <div class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-bold mt-0.5 shrink-0">1</div>
+                            <div>
+                                <h5 class="font-semibold text-gray-900 text-sm">Thu thập & Thống kê dữ liệu cá nhân (Data Aggregation)</h5>
+                                <p class="text-xs text-gray-600 mt-1 leading-relaxed">
+                                    Moni thực hiện xuất sắc việc lọc và truy xuất các khoản giao dịch trong quá khứ (ví dụ: <span class="bg-gray-100 px-1 py-0.5 rounded text-gray-800">"tra cứu các khoản chi phí bay"</span>), tự tổng hợp chi phí và tính mức trung bình một cách nhanh chóng.
+                                </p>
+                            </div>
+                        </div>
+                        <!-- Card Point 2 -->
+                        <div class="flex items-start space-x-3">
+                            <div class="w-6 h-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-bold mt-0.5 shrink-0">2</div>
+                            <div>
+                                <h5 class="font-semibold text-gray-900 text-sm">Khả năng nhận diện lỗi chính tả (Typo Tolerance)</h5>
+                                <p class="text-xs text-gray-600 mt-1 leading-relaxed">
+                                    Công cụ xử lý NLP cực kỳ linh hoạt. Khi khách hàng gõ nhầm ký tự nghiêm trọng như <span class="bg-gray-100 px-1 py-0.5 rounded text-gray-800">"đbagw ký"</span>, AI vẫn tự động điều hướng chính xác về hành động <span class="text-emerald-700 font-medium">"đăng ký"</span>.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Failure Paths (Điểm gãy) -->
+                <div class="bg-white rounded-2xl border border-red-100 p-6 shadow-sm hover:shadow-md transition-shadow">
+                    <div class="flex items-center justify-between mb-4 pb-3 border-b border-red-50">
+                        <div class="flex items-center space-x-2 text-red-500">
+                            <i data-lucide="x-circle" class="w-5 h-5"></i>
+                            <h4 class="font-bold text-gray-900">Điểm gãy Trải nghiệm (Failure Paths)</h4>
+                        </div>
+                        <span class="bg-red-50 text-red-600 text-xs font-semibold px-2.5 py-1 rounded-full">Rủi ro nghiêm trọng</span>
+                    </div>
+
+                    <div class="space-y-4">
+                        <!-- Card Point 1 -->
+                        <div class="flex items-start space-x-3">
+                            <div class="w-6 h-6 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xs font-bold mt-0.5 shrink-0">1</div>
+                            <div>
+                                <h5 class="font-semibold text-gray-900 text-sm flex items-center">
+                                    Thiếu khả năng thực thi (Actionless UI)
+                                    <span class="ml-1.5 px-1.5 py-0.5 bg-red-50 text-red-600 text-[10px] rounded">Ma sát lớn</span>
+                                </h5>
+                                <p class="text-xs text-gray-600 mt-1 leading-relaxed">
+                                    Khi người dùng hỏi phím tắt hay công cụ thực thi trực tiếp, trợ lý chỉ trả về văn bản mô tả các bước thủ công dài dòng, ép khách hàng phải tự thoát chat, tự lục lọi chức năng trong ứng dụng.
+                                </p>
+                            </div>
+                        </div>
+                        <!-- Card Point 2 -->
+                        <div class="flex items-start space-x-3">
+                            <div class="w-6 h-6 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xs font-bold mt-0.5 shrink-0">2</div>
+                            <div>
+                                <h5 class="font-semibold text-gray-900 text-sm flex items-center">
+                                    Mâu thuẫn lợi ích hệ sinh thái (Ecosystem Conflict)
+                                    <span class="ml-1.5 px-1.5 py-0.5 bg-red-50 text-red-600 text-[10px] rounded">Mất khách hàng</span>
+                                </h5>
+                                <p class="text-xs text-gray-600 mt-1 leading-relaxed">
+                                    Tại truy vấn <span class="bg-gray-100 px-1 py-0.5 rounded text-gray-800">"tìm khách sạn gần đây"</span>, AI tự nhận lỗi thiếu dữ liệu định vị rồi đề xuất người dùng rời MoMo để mở các ứng dụng đối thủ (Agoda, Booking, Traveloka) thay vì dẫn vào mini-app sẵn có.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Interactive Flow Re-design -->
+        <section class="mb-10 bg-white rounded-3xl border border-gray-100 p-6 sm:p-8 shadow-sm">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-gray-100 mb-8">
+                <div class="flex items-center space-x-3">
+                    <div class="p-2 bg-momo-100 rounded-lg text-momo-600">
+                        <i data-lucide="git-branch" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-900">2. Phân tích luồng trải nghiệm</h3>
+                        <p class="text-xs text-gray-500">So sánh trực quan giữa hiện tại (AS-IS) và phương án tối ưu đề xuất (TO-BE)</p>
+                    </div>
+                </div>
+
+                <!-- Segmented Control for Switch flow simulation -->
+                <div class="flex bg-gray-100 p-1 rounded-xl self-start sm:self-center">
+                    <button onclick="switchFlow('flow1', 'asis')" id="btn-flow1-asis" class="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 bg-red-600 text-white shadow-sm">
+                        AS-IS (Hiện tại)
+                    </button>
+                    <button onclick="switchFlow('flow1', 'tobe')" id="btn-flow1-tobe" class="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 text-gray-600 hover:text-gray-900">
+                        TO-BE (Đề xuất)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Flow Container 1: Action/Navigation Request -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                <div class="lg:col-span-4">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-momo-500">Tình huống 01</span>
+                    <h4 class="text-lg font-bold text-gray-900 mt-1 mb-3">Yêu cầu Thực thi / Điều hướng</h4>
+                    <p class="text-xs text-gray-600 leading-relaxed mb-4">
+                        Khảo sát hành trình tương tác khi người dùng gửi yêu cầu như: <span class="bg-gray-100 px-1 py-0.5 rounded text-gray-700 italic">"Đặt vé máy bay"</span> hoặc <span class="bg-gray-100 px-1 py-0.5 rounded text-gray-700 italic">"Liên kết ngân hàng"</span>.
+                    </p>
+                    
+                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                        <div class="flex items-center justify-between text-xs mb-2">
+                            <span class="text-gray-500 font-medium">Nhận xét về luồng này:</span>
+                        </div>
+                        <div id="flow1-comment" class="text-xs text-red-600 leading-relaxed font-medium">
+                            🔴 Quy trình hiện tại bắt người dùng phải "thuộc lòng" hướng dẫn văn bản, gây ra tỷ lệ rơi rớt (drop-off) cực cao tại điểm tự tra cứu.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interactive Visual Flow Chart -->
+                <div class="lg:col-span-8 bg-gray-50/50 p-6 rounded-2xl border border-gray-100 relative min-h-[300px] flex items-center justify-center">
+                    
+                    <!-- AS-IS FLOW CHART VISUAL -->
+                    <div id="chart-flow1-asis" class="w-full grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                        <!-- Step 1 -->
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 text-center relative">
+                            <div class="text-[10px] uppercase font-bold text-gray-400 mb-1">Bước 1</div>
+                            <p class="text-xs font-semibold text-gray-900">Nhập câu lệnh</p>
+                            <p class="text-[10px] text-gray-500 mt-1">"Đặt vé máy bay"</p>
+                        </div>
+                        <!-- Arrow -->
+                        <div class="hidden md:flex justify-center text-gray-300"><i data-lucide="arrow-right" class="w-5 h-5"></i></div>
+                        
+                        <!-- Step 2 -->
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-red-200 text-center relative">
+                            <div class="text-[10px] uppercase font-bold text-red-500 mb-1">Bước 2</div>
+                            <p class="text-xs font-semibold text-gray-900">AI Trả text</p>
+                            <p class="text-[10px] text-gray-500 mt-1">Đoạn text dài hướng dẫn các bước manual</p>
+                        </div>
+                        <!-- Arrow -->
+                        <div class="hidden md:flex justify-center text-gray-300"><i data-lucide="arrow-right" class="w-5 h-5"></i></div>
+
+                        <!-- Step 3 (Friction Point) -->
+                        <div class="bg-red-50 p-4 rounded-xl shadow-sm border-2 border-red-500 text-center relative flow-step-active col-span-1 md:col-span-1">
+                            <div class="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-red-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">ĐIỂM NGHẼN</div>
+                            <div class="text-[10px] uppercase font-bold text-red-600 mb-1">Bước 3</div>
+                            <p class="text-xs font-bold text-red-900">Thao tác thủ công</p>
+                            <p class="text-[10px] text-red-700 mt-1">Tự thoát chat, tự mò mẫm danh mục trên App</p>
+                        </div>
+                    </div>
+
+                    <!-- TO-BE FLOW CHART VISUAL -->
+                    <div id="chart-flow1-tobe" class="w-full hidden grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                        <!-- Step 1 -->
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 text-center">
+                            <div class="text-[10px] uppercase font-bold text-gray-400 mb-1">Bước 1</div>
+                            <p class="text-xs font-semibold text-gray-900">Nhập câu lệnh</p>
+                            <p class="text-[10px] text-gray-500 mt-1">"Đặt vé máy bay"</p>
+                        </div>
+                        <!-- Arrow -->
+                        <div class="hidden md:flex justify-center text-gray-300"><i data-lucide="arrow-right" class="w-5 h-5"></i></div>
+                        
+                        <!-- Step 2 -->
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-emerald-100 text-center">
+                            <div class="text-[10px] uppercase font-bold text-emerald-600 mb-1">Bước 2</div>
+                            <p class="text-xs font-semibold text-gray-900">AI Trả text + Deeplink</p>
+                            <p class="text-[10px] text-emerald-700 mt-1 font-medium">[Nút đặt vé nhanh]</p>
+                        </div>
+                        <!-- Arrow -->
+                        <div class="hidden md:flex justify-center text-gray-300"><i data-lucide="arrow-right" class="w-5 h-5"></i></div>
+
+                        <!-- Step 3 (Optimal Point) -->
+                        <div class="bg-emerald-50 p-4 rounded-xl shadow-sm border-2 border-emerald-500 text-center relative col-span-1 md:col-span-1">
+                            <div class="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">THÀNH CÔNG</div>
+                            <div class="text-[10px] uppercase font-bold text-emerald-600 mb-1">Bước 3</div>
+                            <p class="text-xs font-bold text-emerald-900">Mở thẳng màn hình</p>
+                            <p class="text-[10px] text-emerald-700 mt-1">Khách hàng click và chuyển đổi ngay tức thì</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2.2: Ecosystem Cross-sell Flow -->
+        <section class="mb-10 bg-white rounded-3xl border border-gray-100 p-6 sm:p-8 shadow-sm">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-gray-100 mb-8">
+                <div class="flex items-center space-x-3">
+                    <div class="p-2 bg-momo-100 rounded-lg text-momo-600">
+                        <i data-lucide="shuffle" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-900">2.2. Dịch vụ ngoài phạm vi lõi (Cross-selling)</h3>
+                        <p class="text-xs text-gray-500">Kịch bản khi người dùng truy vấn các dịch vụ chưa được tích hợp bản đồ dữ liệu</p>
+                    </div>
+                </div>
+
+                <!-- Segmented Control for Flow 2 -->
+                <div class="flex bg-gray-100 p-1 rounded-xl self-start sm:self-center">
+                    <button onclick="switchFlow('flow2', 'asis')" id="btn-flow2-asis" class="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 bg-red-600 text-white shadow-sm">
+                        AS-IS (Hiện tại)
+                    </button>
+                    <button onclick="switchFlow('flow2', 'tobe')" id="btn-flow2-tobe" class="px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 text-gray-600 hover:text-gray-900">
+                        TO-BE (Đề xuất)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Flow Container 2 -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                <div class="lg:col-span-4">
+                    <span class="text-xs font-semibold uppercase tracking-wider text-momo-500">Tình huống 02</span>
+                    <h4 class="text-lg font-bold text-gray-900 mt-1 mb-3">Yêu cầu tìm khách sạn</h4>
+                    <p class="text-xs text-gray-600 leading-relaxed mb-4">
+                        Xử lý yêu cầu <span class="bg-gray-100 px-1 py-0.5 rounded text-gray-700 italic">"Tìm phòng khách sạn gần đây"</span> khi trợ lý chưa thể định vị trực tiếp trên bản đồ.
+                    </p>
+                    
+                    <div class="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                        <div class="flex items-center justify-between text-xs mb-2">
+                            <span class="text-gray-500 font-medium">Nhận xét về luồng này:</span>
+                        </div>
+                        <div id="flow2-comment" class="text-xs text-red-600 leading-relaxed font-medium">
+                            🔴 Hệ thống hiện tại đang tự động điều hướng và quảng bá miễn phí dịch vụ cho đối thủ cạnh tranh ngoài hệ sinh thái MoMo.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visual Flow 2 -->
+                <div class="lg:col-span-8 bg-gray-50/50 p-6 rounded-2xl border border-gray-100 relative min-h-[300px] flex items-center justify-center">
+                    
+                    <!-- AS-IS FLOW 2 -->
+                    <div id="chart-flow2-asis" class="w-full grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                        <!-- Step 1 -->
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 text-center">
+                            <div class="text-[10px] uppercase font-bold text-gray-400 mb-1">Bước 1</div>
+                            <p class="text-xs font-semibold text-gray-900">Truy vấn dịch vụ</p>
+                            <p class="text-[10px] text-gray-500 mt-1">"Tìm phòng khách sạn"</p>
+                        </div>
+                        <!-- Arrow -->
+                        <div class="hidden md:flex justify-center text-gray-300"><i data-lucide="arrow-right" class="w-5 h-5"></i></div>
+                        
+                        <!-- Step 2 -->
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-red-200 text-center">
+                            <div class="text-[10px] uppercase font-bold text-red-500 mb-1">Bước 2</div>
+                            <p class="text-xs font-semibold text-gray-900">Báo lỗi thiếu GPS</p>
+                            <p class="text-[10px] text-gray-500 mt-1">"Moni chưa có tính năng định vị"</p>
+                        </div>
+                        <!-- Arrow -->
+                        <div class="hidden md:flex justify-center text-gray-300"><i data-lucide="arrow-right" class="w-5 h-5"></i></div>
+
+                        <!-- Step 3 (Failure) -->
+                        <div class="bg-red-50 p-4 rounded-xl shadow-sm border-2 border-red-500 text-center relative col-span-1 md:col-span-1">
+                            <div class="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-red-600 text-white text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">THẤT THOÁT KHÁCH</div>
+                            <div class="text-[10px] uppercase font-bold text-red-600 mb-1">Bước 3</div>
+                            <p class="text-xs font-bold text-red-900">Giới thiệu đối thủ</p>
+                            <p class="text-[10px] text-red-700 mt-1">"Hãy thử trên Booking, Agoda..."</p>
+                        </div>
+                    </div>
+
+                    <!-- TO-BE FLOW 2 -->
+                    <div id="chart-flow2-tobe" class="w-full hidden grid grid-cols-1 md:grid-cols-5 gap-4 items-center">
+                        <!-- Step 1 -->
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 text-center">
+                            <div class="text-[10px] uppercase font-bold text-gray-400 mb-1">Bước 1</div>
+                            <p class="text-xs font-semibold text-gray-900">Truy vấn dịch vụ</p>
+                            <p class="text-[10px] text-gray-500 mt-1">"Tìm phòng khách sạn"</p>
+                        </div>
+                        <!-- Arrow -->
+                        <div class="hidden md:flex justify-center text-gray-300"><i data-lucide="arrow-right" class="w-5 h-5"></i></div>
+                        
+                        <!-- Step 2 -->
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-emerald-100 text-center">
+                            <div class="text-[10px] uppercase font-bold text-emerald-600 mb-1">Bước 2</div>
+                            <p class="text-xs font-semibold text-gray-900">Điều hướng dự phòng</p>
+                            <p class="text-[10px] text-emerald-700 mt-1">"Chưa định vị được nhưng MoMo có giá ưu đãi..."</p>
+                        </div>
+                        <!-- Arrow -->
+                        <div class="hidden md:flex justify-center text-gray-300"><i data-lucide="arrow-right" class="w-5 h-5"></i></div>
+
+                        <!-- Step 3 (Retained) -->
+                        <div class="bg-emerald-50 p-4 rounded-xl shadow-sm border-2 border-emerald-500 text-center relative col-span-1 md:col-span-1">
+                            <div class="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">BÁN CHÉO (CROSS-SELL)</div>
+                            <div class="text-[10px] uppercase font-bold text-emerald-600 mb-1">Bước 3</div>
+                            <p class="text-xs font-bold text-emerald-900">Mở Mini-app MoMo</p>
+                            <p class="text-[10px] text-emerald-700 mt-1">Click phím tắt vào thẳng mini-app Đặt khách sạn</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Strategic Product Decisions -->
+        <section class="mb-10">
+            <div class="flex items-center space-x-3 mb-6">
+                <div class="p-2 bg-momo-100 rounded-lg text-momo-600">
+                    <i data-lucide="award" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900">3. Quyết định sản phẩm chiến lược (Product Decision)</h3>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Decision 1 -->
+                <div class="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm relative overflow-hidden flex flex-col justify-between">
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-momo-100/30 rounded-bl-full flex items-center justify-center text-momo-500">
+                        <i data-lucide="mouse-pointer-click" class="w-8 h-8 mr-[-10px] mt-[-10px]"></i>
+                    </div>
+                    
+                    <div>
+                        <span class="text-xs font-semibold text-momo-600 bg-momo-50 px-2.5 py-1 rounded-full uppercase">Mũi nhọn 01</span>
+                        <h4 class="text-lg font-bold text-gray-900 mt-3 mb-2">Chuyển dịch sang "Trợ lý Thực thi" (Action-Oriented)</h4>
+                        <p class="text-xs text-gray-600 leading-relaxed mb-6">
+                            Bắt buộc loại bỏ hoàn toàn các hướng dẫn thuần chữ (text-heavy) gây mệt mỏi cho người dùng. Thiết lập cơ chế tự động đính kèm nút lệnh hành động (Action Buttons) hoặc lối tắt ứng dụng liên kết sâu (Deeplinks) trong khung chat cho mọi truy vấn kích hoạt tác vụ.
+                        </p>
+                    </div>
+
+                    <div class="border-t border-gray-50 pt-4 mt-auto">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-gray-400 font-medium">Chỉ số đo lường đề xuất (Metric):</span>
+                            <span class="text-momo-600 font-bold bg-momo-50 px-2 py-0.5 rounded">Tỉ lệ nhấp (CTR) của nút</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Decision 2 -->
+                <div class="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm relative overflow-hidden flex flex-col justify-between">
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-purple-100/30 rounded-bl-full flex items-center justify-center text-purple-600">
+                        <i data-lucide="shield-alert" class="w-8 h-8 mr-[-10px] mt-[-10px]"></i>
+                    </div>
+
+                    <div>
+                        <span class="text-xs font-semibold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-full uppercase">Mũi nhọn 02</span>
+                        <h4 class="text-lg font-bold text-gray-900 mt-3 mb-2">Khắc phục lỗ hổng logic bảo vệ thị phần</h4>
+                        <p class="text-xs text-gray-600 leading-relaxed mb-6">
+                            Triển khai bộ lọc chặn danh mục đối thủ (Boundary Filters) để đảm bảo AI không tự động định hướng người dùng rời khỏi nền tảng MoMo. Đồng thời thiết lập cơ chế Điều hướng dự phòng (Fallback Navigation) ưu tiên tiếp thị chéo các giải pháp từ hệ sinh thái Mini-apps nội bộ.
+                        </p>
+                    </div>
+
+                    <div class="border-t border-gray-50 pt-4 mt-auto">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-gray-400 font-medium">Chỉ số đo lường đề xuất (Metric):</span>
+                            <span class="text-purple-700 font-bold bg-purple-50 px-2 py-0.5 rounded">Tỉ lệ Giữ chân khách hàng</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-100 py-6 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-gray-400 font-medium">
+            &copy; 2026 MoMo Moni UX Audit Report. All rights reserved.
+        </div>
+    </footer>
+
+    <!-- Interactive Script -->
+    <script>
+        // Init Lucide Icons
+        lucide.createIcons();
+
+        function switchFlow(flowId, mode) {
+            // Flow ids map to corresponding UI elements
+            const btnAsis = document.getElementById(`btn-${flowId}-asis`);
+            const btnTobe = document.getElementById(`btn-${flowId}-tobe`);
+            const chartAsis = document.getElementById(`chart-${flowId}-asis`);
+            const chartTobe = document.getElementById(`chart-${flowId}-tobe`);
+            const commentBox = document.getElementById(`${flowId}-comment`);
+
+            if (mode === 'tobe') {
+                // Change buttons visual state
+                btnAsis.className = "px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 text-gray-600 hover:text-gray-900";
+                btnTobe.className = "px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 bg-emerald-600 text-white shadow-sm";
+                
+                // Show/Hide Charts
+                chartAsis.classList.add('hidden');
+                chartTobe.classList.remove('hidden');
+
+                // Update text comment dynamically based on flow
+                if (flowId === 'flow1') {
+                    commentBox.className = "text-xs text-emerald-700 leading-relaxed font-semibold";
+                    commentBox.innerHTML = "🟢 Giải pháp TO-BE tích hợp sâu Deeplink giúp giảm ma sát điều hướng, giữ chân người dùng trong ứng dụng và tăng tỷ lệ hoàn tất giao dịch.";
+                } else {
+                    commentBox.className = "text-xs text-emerald-700 leading-relaxed font-semibold";
+                    commentBox.innerHTML = "🟢 Thao tác chuyển mạch mượt mà dẫn thẳng khách hàng vào hệ sinh thái đặt chỗ nội bộ của MoMo, tăng cơ hội chốt doanh thu chéo tốt.";
+                }
+            } else {
+                // Change buttons visual state
+                btnAsis.className = "px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 bg-red-600 text-white shadow-sm";
+                btnTobe.className = "px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 text-gray-600 hover:text-gray-900";
+
+                // Show/Hide Charts
+                chartAsis.classList.remove('hidden');
+                chartTobe.classList.add('hidden');
+
+                // Reset comments
+                if (flowId === 'flow1') {
+                    commentBox.className = "text-xs text-red-600 leading-relaxed font-semibold";
+                    commentBox.innerHTML = "🔴 Quy trình hiện tại bắt người dùng phải 'thuộc lòng' hướng dẫn văn bản, gây ra tỷ lệ rơi rớt (drop-off) cực cao tại điểm tự tra cứu.";
+                } else {
+                    commentBox.className = "text-xs text-red-600 leading-relaxed font-semibold";
+                    commentBox.innerHTML = "🔴 Hệ thống hiện tại đang tự động điều hướng và quảng bá miễn phí dịch vụ cho đối thủ cạnh tranh ngoài hệ sinh thái MoMo.";
+                }
+            }
+        }
+    </script>
+</body>
+</html>
