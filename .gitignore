@@ -3,3 +3,34 @@
 Thumbs.db
 .idea/
 .vscode/
+
+# Environment / secrets
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Node / Next.js
+node_modules/
+**/node_modules/
+.npm-cache/
+**/.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+
+# Test artifacts
+test-results/
+playwright-report/
