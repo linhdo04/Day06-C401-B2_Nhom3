@@ -79,3 +79,52 @@ prototype dùng AI để hỏi 3 câu và gợi ý 2-3 chuyên khoa phù hợp,
 ---
 
 *Day 05 Lab — Batch 02 · AI Product Kickoff Sprint*
+
+---
+
+## SmartBus AI prototype — Day 06
+
+Prototype hiện dùng **Python FastAPI backend** và **Next.js frontend**.
+
+### Cài dependency
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+npm install
+npm --prefix frontend install
+```
+
+### Chạy demo local
+
+Terminal 1:
+
+```bash
+npm run backend
+```
+
+Terminal 2:
+
+```bash
+npm run frontend
+```
+
+Mở `http://localhost:3000`.
+
+### Chạy test
+
+```bash
+npm run test:backend
+npm run test:e2e
+```
+
+### Cấu trúc prototype
+
+```text
+backend/        FastAPI app, schemas, agent tools, mock ticket data
+frontend/       Next.js UI cho search, correction, failure, clarification
+tests/e2e/      Playwright UI tests
+docs/           Demo script và test report
+02-group-spec/  Evidence pack và thin SPEC bản nhóm
+```
