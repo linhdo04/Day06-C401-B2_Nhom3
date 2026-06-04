@@ -375,11 +375,12 @@ def _format_web_sources(raw_results: list[dict], intro: str) -> str:
         title = str(result.get("title") or "Nguồn tham khảo").strip()
         url = str(result.get("url") or "").strip()
         content = summarize_text(str(result.get("content") or "").strip(), limit=220)
-        lines.append(f"{idx}. **{title}**")
+        if url:
+            lines.append(f"{idx}. [{title}]({url})")
+        else:
+            lines.append(f"{idx}. **{title}**")
         if content:
             lines.append(f"   {content}")
-        if url:
-            lines.append(f"   {url}")
 
     lines.append("Hãy mở nguồn phù hợp để xác nhận thông tin mới nhất trước khi đặt dịch vụ.")
     return "\n".join(lines)
