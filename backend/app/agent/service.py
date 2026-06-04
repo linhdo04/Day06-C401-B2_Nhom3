@@ -173,11 +173,12 @@ def chat_agent(request: ChatRequest) -> str:
         return mock_chat_agent(request.message, request.history)
 
     try:
-
         from google import genai
         from google.genai import types
-        from backend.app.agent.tools import search_and_format_tickets, resolve_pickup_ambiguity_tool, search_by_date_tool
 
+        client = genai.Client(api_key=api_key)
+
+        # Build conversation contents from history
         contents = []
         for msg in request.history:
             role = "user" if msg.role == "user" else "model"
@@ -188,8 +189,8 @@ def chat_agent(request: ChatRequest) -> str:
                 )
             )
 
-        # Include the latest message if not in history already
-        if not contents or request.history[-1].text != request.message:
+        # Append current message if not already last in history
+        if not request.history or request.history[-1].text != request.message:
             contents.append(
                 types.Content(
                     role="user",
@@ -198,61 +199,79 @@ def chat_agent(request: ChatRequest) -> str:
             )
 
         system_instruction = (
-            "Bạn là Trợ lý SmartBus, một AI chuyên tìm vé xe khách liên tỉnh và hỗ trợ khách hàng đặt vé.\n"
-            "Nhiệm vụ của bạn là tư vấn tuyến đường, tìm vé xe phù hợp nhất dựa trên giá vé, giờ đi và khoảng cách điểm đón.\n"
-            "Hãy sử dụng các công cụ (tools) được cung cấp để tìm kiếm vé xe và kiểm tra tính nhập nhằng của điểm đón.\n"
-            "Nguyên tắc ứng xử:\n"
-            "1. Nếu khách hàng muốn tìm vé, hãy gọi tool `search_and_format_tickets` để tìm vé.\n"
-            "2. Khi khách hàng đề cập đến điểm đón là 'Thanh Phong' hoặc có từ khóa liên quan, hãy gọi tool `resolve_pickup_ambiguity_tool` để kiểm tra nhập nhằng. Nếu phát hiện nhập nhằng, bạn phải hỏi rõ khách hàng để xác nhận ý muốn của họ trước khi đưa ra đề xuất vé.\n"
-            "3. Nếu không có vé cho ngày yêu cầu, hãy thông báo và gợi ý các ngày đi có vé gần nhất (tool sẽ tự động trả về các ngày gợi ý nếu không có vé).\n"
-            "4. Luôn trả lời một cách lịch sự, ngắn gọn và hữu ích bằng tiếng Việt."
+            "Bạn là Trợ lý SmartBus, AI chuyên hỗ trợ tìm vé xe khách liên tỉnh Việt Nam.\n"
+            "NGUYÊN TẮC SỬ DỤNG TOOLS:\n"
+            "1. Khi khách hỏi tìm vé với TUYẾN CỤ THỂ (có từ/đến), gọi `search_and_format_tickets` "
+            "để tìm trong database nội bộ trước.\n"
+            "2. Nếu không có vé trong database, hoặc khách hỏi về GIÁ VÉ / NHÀ XE THỰC TẾ trên mạng, "
+            "gọi `search_by_date_tool` để tìm qua web (Tavily) rồi trả kết quả đã được trích xuất.\n"
+            "3. Khi khách nhắc tới điểm đón 'Thanh Phong', luôn gọi `resolve_pickup_ambiguity_tool` "
+            "và hỏi rõ trước khi tìm vé.\n"
+            "4. Không bao giờ bịa thông tin giá vé hoặc nhà xe. Chỉ dùng kết quả từ tools.\n"
+            "5. Trả lời ngắn gọn, lịch sự, hoàn toàn bằng tiếng Việt."
         )
 
+        # Tool registry: maps function name -> callable
+        tool_registry = {
+            "search_and_format_tickets": search_and_format_tickets,
+            "search_by_date_tool": search_by_date_tool,
+            "resolve_pickup_ambiguity_tool": resolve_pickup_ambiguity_tool,
+        }
+
+        # First LLM call
         response = client.models.generate_content(
             model="gemini-2.5-flash",
             contents=contents,
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
-                tools=[search_and_format_tickets, resolve_pickup_ambiguity_tool],
+                tools=list(tool_registry.values()),
             )
         )
 
-        if response.function_calls:
-            for function_call in response.function_calls:
-                name = function_call.name
-                args = function_call.args
+        # ReAct loop: execute tool calls and feed results back
+        MAX_TURNS = 3
+        for _ in range(MAX_TURNS):
+            if not response.function_calls:
+                break
 
-                if name == "search_and_format_tickets":
-                    result = search_and_format_tickets(**args)
-                elif name == "resolve_pickup_ambiguity_tool":
-                    result = resolve_pickup_ambiguity_tool(**args)
+            # Append the model's tool-call turn
+            contents.append(response.candidates[0].content)
+
+            # Execute ALL requested tool calls this turn
+            tool_response_parts = []
+            for fc in response.function_calls:
+                fn = tool_registry.get(fc.name)
+                if fn is None:
+                    result = f"Error: tool '{fc.name}' không tồn tại."
                 else:
-                    result = f"Error: Function {name} not found."
+                    try:
+                        result = fn(**fc.args)
+                    except Exception as tool_err:
+                        result = f"Lỗi khi gọi tool '{fc.name}': {tool_err}"
 
-                contents.append(response.candidates[0].content)
-                contents.append(
-                    types.Content(
-                        role="tool",
-                        parts=[
-                            types.Part.from_function_response(
-                                name=name,
-                                response={"result": result}
-                            )
-                        ]
+                tool_response_parts.append(
+                    types.Part.from_function_response(
+                        name=fc.name,
+                        response={"result": result},
                     )
                 )
 
-                response2 = client.models.generate_content(
-                    model="gemini-2.5-flash",
-                    contents=contents,
-                    config=types.GenerateContentConfig(
-                        system_instruction=system_instruction,
-                    )
+            contents.append(
+                types.Content(role="tool", parts=tool_response_parts)
+            )
+
+            # Next LLM turn to synthesise tool results
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=contents,
+                config=types.GenerateContentConfig(
+                    system_instruction=system_instruction,
                 )
-                return response2.text or "Tôi không nhận được phản hồi."
+            )
 
         return response.text or "Tôi không nhận được phản hồi."
 
     except Exception as e:
-        print(f"Gemini API Error in chat_agent: {e}")
+        print(f"[chat_agent] Gemini error: {e}")
         return mock_chat_agent(request.message, request.history)
+

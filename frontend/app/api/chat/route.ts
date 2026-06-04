@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const BACKEND = process.env.BACKEND_URL ?? "http://127.0.0.1:8000";
+const BACKEND = process.env.BACKEND_URL ?? "http://127.0.0.1:8001";
 
 const MOCK_REPLIES: [RegExp, string][] = [
   [/giá|rẻ|price/i, "Giá vé thường dao động từ 150.000 – 500.000 VNĐ tùy tuyến và hãng xe. Bạn có thể chọn ưu tiên 'Giá thấp nhất' để SmartBus xếp hạng theo giá."],
