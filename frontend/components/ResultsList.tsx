@@ -23,8 +23,30 @@ export function ResultsList({ query, result, onClarify, onSuggestedDate }: Resul
     return <FailurePanel result={result} onSuggestedDate={onSuggestedDate} />;
   }
 
-  if (result.web_results.length > 0 && result.tickets.length === 0) {
-    return <WebResultsPanel query={query} result={result} />;
+  if (result.transportation_data.length > 0) {
+    return (
+      <div className="results-stack">
+        <PathStatus result={result} />
+        <WebResultsPanel query={query} result={result} />
+
+        {result.tickets.length > 0 ? (
+          <section className="planning-section">
+            <div className="result-heading">
+              <div>
+                <p className="eyebrow">Normalized Ticket Options</p>
+                <h2>Chi tiết phương tiện có thể đặt</h2>
+              </div>
+            </div>
+
+            <div className="ticket-list" data-testid="ticket-list">
+              {result.tickets.map((ticket, index) => (
+                <TicketCard key={ticket.id} rank={index + 1} ticket={ticket} />
+              ))}
+            </div>
+          </section>
+        ) : null}
+      </div>
+    );
   }
 
   return (
