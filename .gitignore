@@ -34,3 +34,5 @@ build/
 # Test artifacts
 test-results/
 playwright-report/
+.kiro/
+.playwright-cli/
