@@ -856,8 +856,42 @@ input {
   border-radius: 12px;
   font-size: 0.9rem;
   line-height: 1.5;
-  white-space: pre-wrap;
   word-break: break-word;
+}
+
+.chat-bubble a {
+  color: var(--accent-strong);
+  font-weight: 750;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(0, 127, 115, 0.32);
+}
+
+.chat-bubble a:hover {
+  border-bottom-color: currentColor;
+}
+
+.chat-bubble strong {
+  font-weight: 800;
+}
+
+.chat-list-item {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  gap: 6px;
+  margin-top: 7px;
+}
+
+.chat-list-marker {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  border-radius: 999px;
+  background: rgba(0, 127, 115, 0.11);
+  color: var(--accent-strong);
+  font-size: 0.72rem;
+  font-weight: 800;
 }
 
 .chat-bubble.user {

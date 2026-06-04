@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { Bot, Maximize2, MessageCircle, Minimize2, Send, X } from "lucide-react";
 
 type Message = {
@@ -18,6 +18,103 @@ const SUGGESTED_PROMPTS = [
   "Đi Huế nên ăn gì và chơi ở đâu?",
   "Tìm vé và phòng cho chuyến Nha Trang"
 ];
+
+const INLINE_MARKDOWN_RE = /(\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|\*\*([^*]+)\*\*|(https?:\/\/[^\s]+))/g;
+
+function isSafeHttpUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function compactUrl(value: string) {
+  try {
+    const url = new URL(value);
+    return url.hostname.replace(/^www\./, "");
+  } catch {
+    return value;
+  }
+}
+
+function renderInlineMarkdown(text: string) {
+  const nodes = [];
+  let lastIndex = 0;
+
+  for (const match of text.matchAll(INLINE_MARKDOWN_RE)) {
+    const index = match.index ?? 0;
+    if (index > lastIndex) {
+      nodes.push(text.slice(lastIndex, index));
+    }
+
+    const [, raw, linkLabel, markdownHref, boldText, plainHref] = match;
+    const href = markdownHref || plainHref;
+
+    if (href && isSafeHttpUrl(href)) {
+      nodes.push(
+        <a key={`${index}-${href}`} href={href} target="_blank" rel="noreferrer">
+          {linkLabel || compactUrl(href)}
+        </a>
+      );
+    } else if (boldText) {
+      nodes.push(<strong key={`${index}-${boldText}`}>{boldText}</strong>);
+    } else {
+      nodes.push(raw);
+    }
+
+    lastIndex = index + raw.length;
+  }
+
+  if (lastIndex < text.length) {
+    nodes.push(text.slice(lastIndex));
+  }
+
+  return nodes;
+}
+
+function ChatMessageContent({ text }: { text: string }) {
+  const lines = text.split("\n");
+
+  return (
+    <>
+      {lines.map((line, index) => {
+        const ordered = line.match(/^\s*(\d+)\.\s+(.*)$/);
+        const bullet = line.match(/^\s*[-*]\s+(.*)$/);
+
+        if (!line.trim()) {
+          return <br key={index} />;
+        }
+
+        if (ordered) {
+          return (
+            <div className="chat-list-item" key={index}>
+              <span className="chat-list-marker">{ordered[1]}</span>
+              <span>{renderInlineMarkdown(ordered[2])}</span>
+            </div>
+          );
+        }
+
+        if (bullet) {
+          return (
+            <div className="chat-list-item" key={index}>
+              <span className="chat-list-marker">•</span>
+              <span>{renderInlineMarkdown(bullet[1])}</span>
+            </div>
+          );
+        }
+
+        return (
+          <Fragment key={index}>
+            {index > 0 ? <br /> : null}
+            {renderInlineMarkdown(line)}
+          </Fragment>
+        );
+      })}
+    </>
+  );
+}
 
 export function ChatAssistant() {
   const [open, setOpen] = useState(false);
@@ -87,7 +184,7 @@ export function ChatAssistant() {
           <div className="chat-messages">
             {messages.map((m, i) => (
               <div key={i} className={`chat-bubble ${m.role}`}>
-                {m.text}
+                <ChatMessageContent text={m.text} />
               </div>
             ))}
             {messages.length === 1 && !loading ? (

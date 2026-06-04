@@ -727,7 +727,12 @@ def chat_agent(request: ChatRequest) -> str:
             "hoặc khu vực đặt phòng, gọi `search_travel_guide_tool` để lấy nguồn web trước khi gợi ý.\n"
             "5. Khi khách hỏi riêng về khách sạn, homestay hoặc đặt phòng, gọi `search_stay_options_tool`.\n"
             "6. Không bao giờ bịa giá vé, giờ đi, tình trạng phòng hoặc còn chỗ. Nêu rõ cần mở nguồn nhà cung cấp để xác nhận.\n"
-            "7. Trả lời ngắn gọn, lịch sự, hoàn toàn bằng tiếng Việt."
+            "7. Trả lời ngắn gọn, lịch sự, hoàn toàn bằng tiếng Việt.\n"
+            "ĐỊNH DẠNG CÂU TRẢ LỜI:\n"
+            "- Ưu tiên cấu trúc dễ quét: 1 câu tóm tắt ngắn, sau đó là danh sách 3-5 gợi ý hoặc nguồn tham khảo.\n"
+            "- Với nguồn web, luôn dùng markdown link dạng `[Tên nguồn](URL)`, không dán URL thô dài trong nội dung.\n"
+            "- Mỗi nguồn nên có mô tả 1 dòng về thông tin hữu ích; tránh đoạn văn dài.\n"
+            "- Kết thúc bằng một câu hỏi hành động cụ thể, ví dụ muốn tôi dựng lịch trình theo ngân sách/ngày đi không."
         )
 
         # Tool registry: maps function name -> callable
