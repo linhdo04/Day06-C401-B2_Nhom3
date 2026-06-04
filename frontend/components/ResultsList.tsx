@@ -33,7 +33,7 @@ export function ResultsList({ query, result, onClarify, onSuggestedDate }: Resul
 
       <div className="result-heading">
         <div>
-          <p className="eyebrow">Top {result.tickets.length} lựa chọn</p>
+          <p className="eyebrow">Top {result.tickets.length} phương án</p>
           <h2>
             {query.from_city} → {query.to_city}
           </h2>

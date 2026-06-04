@@ -1,1 +1,1 @@
-"""Static data for the SmartBus prototype."""
+"""Static data for the SmartTravel prototype."""

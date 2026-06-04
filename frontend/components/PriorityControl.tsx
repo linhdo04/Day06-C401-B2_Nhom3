@@ -15,15 +15,15 @@ const options: Array<{
   label: string;
   icon: LucideIcon;
 }> = [
-  { value: "pickup_distance", label: "Điểm đón gần", icon: MapPinned },
-  { value: "price", label: "Giá thấp", icon: BadgeDollarSign },
+  { value: "pickup_distance", label: "Vị trí tiện", icon: MapPinned },
+  { value: "price", label: "Giá tốt", icon: BadgeDollarSign },
   { value: "time", label: "Giờ đi", icon: Clock }
 ];
 
 export function PriorityControl({ value, onChange }: PriorityControlProps) {
   return (
     <fieldset className="priority-control">
-      <legend>Ưu tiên xếp hạng</legend>
+      <legend>Ưu tiên gợi ý</legend>
       <div className="segment-row" data-testid="priority-control">
         {options.map((option) => {
           const Icon = option.icon;

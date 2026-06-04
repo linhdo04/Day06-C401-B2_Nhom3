@@ -242,6 +242,10 @@ input {
   margin-top: 8px;
 }
 
+.transport-control .segment-row {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .segment,
 .primary-action,
 .ticket-actions a,
@@ -357,6 +361,13 @@ input {
 
 .result-heading h2 {
   margin-bottom: 0;
+}
+
+.result-note {
+  max-width: 620px;
+  margin: 6px 0 0;
+  color: var(--muted);
+  line-height: 1.45;
 }
 
 .date-chip {
@@ -679,6 +690,31 @@ input {
   border-bottom-left-radius: 4px;
 }
 
+.chat-suggestions {
+  display: grid;
+  gap: 8px;
+  align-self: stretch;
+}
+
+.chat-suggestions button {
+  width: fit-content;
+  max-width: 100%;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--accent-strong);
+  font-size: 0.82rem;
+  font-weight: 750;
+  text-align: left;
+}
+
+.chat-suggestions button:hover {
+  border-color: rgba(0, 127, 115, 0.42);
+  background: var(--accent-soft);
+}
+
 .chat-typing {
   display: flex;
   align-items: center;
@@ -824,7 +860,8 @@ input {
   }
 
   .field-grid,
-  .segment-row {
+  .segment-row,
+  .transport-control .segment-row {
     grid-template-columns: 1fr;
   }
 

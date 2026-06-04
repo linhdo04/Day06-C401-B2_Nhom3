@@ -10,8 +10,14 @@ type Message = {
 
 const WELCOME: Message = {
   role: "assistant",
-  text: "Xin chào! Tôi là trợ lý SmartBus. Tôi có thể giúp bạn tìm vé xe, giải đáp thắc mắc về tuyến đường hoặc hướng dẫn sử dụng ứng dụng."
+  text: "Xin chào! Tôi là trợ lý SmartTravel. Tôi có thể gợi ý vé xe, tàu, máy bay, lịch trình, điểm du lịch, trải nghiệm địa phương và lựa chọn đặt phòng."
 };
+
+const SUGGESTED_PROMPTS = [
+  "Gợi ý lịch trình Đà Nẵng 3 ngày 2 đêm",
+  "Đi Huế nên ăn gì và chơi ở đâu?",
+  "Tìm vé và phòng cho chuyến Nha Trang"
+];
 
 export function ChatAssistant() {
   const [open, setOpen] = useState(false);
@@ -65,10 +71,10 @@ export function ChatAssistant() {
       </button>
 
       {open && (
-        <div className={`chat-window${fullscreen ? " fullscreen" : ""}`} role="dialog" aria-label="Trợ lý SmartBus">
+        <div className={`chat-window${fullscreen ? " fullscreen" : ""}`} role="dialog" aria-label="Trợ lý SmartTravel">
           <div className="chat-header">
             <Bot size={18} aria-hidden="true" />
-            <span>Trợ lý SmartBus</span>
+            <span>Trợ lý SmartTravel</span>
             <button
               className="chat-header-btn"
               onClick={() => setFullscreen((v) => !v)}
@@ -84,6 +90,19 @@ export function ChatAssistant() {
                 {m.text}
               </div>
             ))}
+            {messages.length === 1 && !loading ? (
+              <div className="chat-suggestions" aria-label="Gợi ý câu hỏi">
+                {SUGGESTED_PROMPTS.map((prompt) => (
+                  <button
+                    key={prompt}
+                    onClick={() => setInput(prompt)}
+                    type="button"
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+            ) : null}
             {loading && (
               <div className="chat-bubble assistant chat-typing" aria-label="Đang trả lời">
                 <span /><span /><span />
@@ -98,7 +117,7 @@ export function ChatAssistant() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && send()}
-              placeholder="Nhập câu hỏi..."
+              placeholder="Hỏi lịch trình, vé, khách sạn..."
               disabled={loading}
             />
             <button

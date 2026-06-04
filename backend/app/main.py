@@ -28,11 +28,11 @@ from backend.app.schemas import (
 
 load_environment()
 configure_logging()
-logger = logging.getLogger("smartbus.api")
+logger = logging.getLogger("smarttravel.api")
 
 app = FastAPI(
-    title="SmartBus AI",
-    description="Python backend for the SmartBus AI Day 06 prototype.",
+    title="SmartTravel AI",
+    description="Python backend for the SmartTravel AI Day 06 prototype.",
     version="0.1.0",
 )
 

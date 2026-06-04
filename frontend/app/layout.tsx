@@ -3,8 +3,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "SmartBus AI",
-  description: "AI-assisted intercity bus ticket ranking prototype"
+  title: "SmartTravel AI",
+  description: "AI-assisted travel planning, ticket search, and stay support prototype"
 };
 
 export default function RootLayout({
