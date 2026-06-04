@@ -1,7 +1,17 @@
 "use client";
 
 import { FormEvent } from "react";
-import { BusFront, CalendarDays, MapPin, Plane, Search, Sparkles, TrainFront } from "lucide-react";
+import {
+  Banknote,
+  BusFront,
+  CalendarDays,
+  MapPin,
+  Plane,
+  Search,
+  Sparkles,
+  TrainFront,
+  Users
+} from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import type { Priority, TransportMode, TripQuery } from "@/lib/types";
@@ -35,7 +45,7 @@ export function SearchForm({
   onPriorityChange,
   onSubmit
 }: SearchFormProps) {
-  function updateField(field: keyof TripQuery, value: string) {
+  function updateField(field: keyof TripQuery, value: string | number) {
     onQueryChange({ ...query, [field]: value });
   }
 
@@ -101,6 +111,53 @@ export function SearchForm({
             type="date"
             value={query.date}
             onChange={(event) => updateField("date", event.target.value)}
+          />
+        </div>
+      </label>
+
+      <div className="field-grid">
+        <label>
+          <span>Số ngày</span>
+          <div className="input-wrap">
+            <CalendarDays aria-hidden="true" size={18} />
+            <input
+              data-testid="duration-input"
+              min={1}
+              max={30}
+              type="number"
+              value={query.duration_days}
+              onChange={(event) => updateField("duration_days", Number(event.target.value))}
+            />
+          </div>
+        </label>
+
+        <label>
+          <span>Số khách</span>
+          <div className="input-wrap">
+            <Users aria-hidden="true" size={18} />
+            <input
+              data-testid="travelers-input"
+              min={1}
+              max={20}
+              type="number"
+              value={query.travelers}
+              onChange={(event) => updateField("travelers", Number(event.target.value))}
+            />
+          </div>
+        </label>
+      </div>
+
+      <label>
+        <span>Ngân sách chuyến đi</span>
+        <div className="input-wrap">
+          <Banknote aria-hidden="true" size={18} />
+          <input
+            data-testid="budget-input"
+            min={0}
+            step={100000}
+            type="number"
+            value={query.budget_vnd}
+            onChange={(event) => updateField("budget_vnd", Number(event.target.value))}
           />
         </div>
       </label>

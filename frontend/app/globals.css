@@ -390,6 +390,190 @@ input {
   gap: 12px;
 }
 
+.planning-section {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+.section-title,
+.data-table-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-title svg,
+.data-table-title svg {
+  color: var(--accent);
+  flex: 0 0 auto;
+}
+
+.section-title h3,
+.data-table-title h3 {
+  margin-bottom: 0;
+}
+
+.data-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.data-table {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-muted);
+  overflow-x: auto;
+}
+
+.data-table table {
+  width: 100%;
+  min-width: 280px;
+  border-collapse: collapse;
+}
+
+.data-table th,
+.data-table td {
+  padding: 8px 6px;
+  border-bottom: 1px solid rgba(97, 112, 107, 0.18);
+  font-size: 0.82rem;
+  line-height: 1.35;
+  text-align: left;
+  vertical-align: top;
+}
+
+.data-table th {
+  color: var(--muted);
+  font-weight: 850;
+}
+
+.data-table td {
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.ranking-list,
+.itinerary-list,
+.source-link-list {
+  display: grid;
+  gap: 10px;
+}
+
+.ranking-card {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-muted);
+}
+
+.ranking-card p {
+  margin: 6px 0 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.score-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.score-row span {
+  display: inline-flex;
+  min-height: 30px;
+  align-items: center;
+  padding: 0 9px;
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.decision-strip {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid rgba(0, 127, 115, 0.26);
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.decision-strip svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+.decision-strip p {
+  margin-bottom: 0;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.itinerary-day {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.7fr) minmax(0, 1.5fr) auto;
+  gap: 12px;
+  align-items: start;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-muted);
+}
+
+.itinerary-day span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--accent-strong);
+  font-size: 0.78rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.itinerary-day ul {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.itinerary-day p {
+  margin-bottom: 0;
+  color: var(--ink);
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.source-link-list a {
+  display: flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  color: var(--accent-strong);
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
 .ticket-card,
 .web-result-card {
   display: grid;
@@ -836,6 +1020,10 @@ input {
     grid-template-columns: 1fr;
   }
 
+  .data-grid {
+    grid-template-columns: 1fr;
+  }
+
   .search-pane {
     position: static;
   }
@@ -875,7 +1063,9 @@ input {
   }
 
   .ticket-card,
-  .web-result-card {
+  .web-result-card,
+  .ranking-card,
+  .itinerary-day {
     grid-template-columns: 1fr;
   }
 

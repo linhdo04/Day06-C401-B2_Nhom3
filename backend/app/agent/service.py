@@ -27,9 +27,16 @@ from backend.app.schemas import (
     AgentResponse,
     ClarificationChoice,
     ClarificationRequest,
+    CollectedHotel,
+    CollectedTransportation,
+    FoodEstimate,
+    ItineraryDay,
     PathType,
+    RankedPlanOption,
+    TicketOption,
     TripQuery,
     ChatRequest,
+    WebSearchResult,
 )
 
 logger = logging.getLogger("smarttravel.agent")
@@ -105,9 +112,10 @@ def search_trip(query: TripQuery, *, skip_ambiguity: bool = False) -> AgentRespo
         if web_results:
             response = AgentResponse(
                 path=PathType.low_confidence,
-                summary="Tìm thấy nguồn tham khảo từ web cho tuyến này.",
+                summary="Agent đã thu thập nguồn web và tạo dữ liệu kế hoạch tạm tính cho tuyến này.",
                 warning=None,
                 web_results=web_results,
+                **_build_travel_plan(intent, [], web_results),
                 suggested_dates=suggested_dates,
             )
             log_json(
@@ -149,8 +157,12 @@ def search_trip(query: TripQuery, *, skip_ambiguity: bool = False) -> AgentRespo
 
     response = AgentResponse(
         path=PathType.low_confidence if warning else PathType.happy,
-        summary=f"Đã tìm thấy {len(ranked)} lựa chọn phù hợp nhất theo ưu tiên {intent.priority.value}.",
+        summary=(
+            "Agent đã thu thập, chuẩn hóa, so sánh và chọn phương án phù hợp "
+            f"theo ưu tiên {intent.priority.value}."
+        ),
         tickets=ranked,
+        **_build_travel_plan(intent, ranked, []),
         warning=warning,
     )
     log_json(
@@ -224,6 +236,274 @@ def _build_low_confidence_warning(tickets: list) -> str | None:
         return "Lựa chọn đứng đầu có điểm đón xa hơn 5 km; hãy mở Maps để xác nhận trước khi đặt."
 
     return None
+
+
+def _build_travel_plan(
+    query: TripQuery,
+    tickets: list[TicketOption],
+    web_results: list[WebSearchResult],
+) -> dict:
+    transportation = _collect_transportation(query, tickets, web_results)
+    hotels = _estimate_hotels(query)
+    food = _estimate_food()
+    ranked_options = _rank_plan_options(query, transportation, hotels, food)
+    decision = _build_decision(query, ranked_options)
+    itinerary = _generate_itinerary(query, ranked_options, food)
+
+    return {
+        "transportation_data": transportation,
+        "hotels_data": hotels,
+        "food_estimates": food,
+        "ranked_plan_options": ranked_options,
+        "decision": decision,
+        "itinerary": itinerary,
+    }
+
+
+def _collect_transportation(
+    query: TripQuery,
+    tickets: list[TicketOption],
+    web_results: list[WebSearchResult],
+) -> list[CollectedTransportation]:
+    collected: list[CollectedTransportation] = [
+        CollectedTransportation(
+            transport_type="Bus",
+            provider=ticket.operator,
+            price=ticket.price_vnd,
+            departure=ticket.departure_time,
+            arrival=ticket.arrival_time,
+            pickup=ticket.pickup_point,
+        )
+        for ticket in tickets[:3]
+    ]
+
+    if not collected and web_results:
+        for idx, source in enumerate(web_results[:3], 1):
+            collected.append(
+                CollectedTransportation(
+                    transport_type=_infer_transport_type(source),
+                    provider=source.title[:52],
+                    price=_estimate_transport_price(query, idx),
+                    departure="Cần xác nhận",
+                    arrival="Cần xác nhận",
+                    pickup=query.from_city,
+                    source="Web estimate",
+                )
+            )
+
+    if query.transport_mode.value in ("all", "train") and not any(
+        item.transport_type == "Train" for item in collected
+    ):
+        collected.append(
+            CollectedTransportation(
+                transport_type="Train",
+                provider="Vietnam Railways",
+                price=max(520_000, _base_route_price(query) + 180_000),
+                departure="19:30",
+                arrival="10:15",
+                pickup=f"Ga {query.from_city}",
+                source="Planning estimate",
+            )
+        )
+
+    if query.transport_mode.value in ("all", "flight") and not any(
+        item.transport_type == "Flight" for item in collected
+    ):
+        collected.append(
+            CollectedTransportation(
+                transport_type="Flight",
+                provider="Vietnam Airlines / Vietjet",
+                price=max(1_100_000, _base_route_price(query) * 3),
+                departure="08:00",
+                arrival="09:25",
+                pickup=f"Sân bay {query.from_city}",
+                source="Planning estimate",
+            )
+        )
+
+    return collected[:5]
+
+
+def _infer_transport_type(source: WebSearchResult) -> str:
+    text = normalize_text(f"{source.title} {source.snippet}")
+    if "may bay" in text or "flight" in text or "vietjet" in text:
+        return "Flight"
+    if "tau" in text or "duong sat" in text or "rail" in text:
+        return "Train"
+    return "Bus"
+
+
+def _base_route_price(query: TripQuery) -> int:
+    destination = normalize_text(query.to_city)
+    if "da nang" in destination:
+        return 420_000
+    if "nha trang" in destination:
+        return 520_000
+    if "ho chi minh" in destination or "sai gon" in destination:
+        return 780_000
+    if "hue" in destination:
+        return 360_000
+    return 300_000
+
+
+def _estimate_transport_price(query: TripQuery, index: int) -> int:
+    mode = query.transport_mode.value
+    multiplier = {"bus": 1.0, "train": 1.45, "flight": 2.9, "all": 1.0}[mode]
+    return int((_base_route_price(query) * multiplier) + (index - 1) * 90_000)
+
+
+def _estimate_hotels(query: TripQuery) -> list[CollectedHotel]:
+    destination = query.to_city
+    return [
+        CollectedHotel(
+            hotel_name=f"{destination} Local Stay",
+            price_per_night=650_000,
+            rating=4.1,
+            distance_to_center=1.8,
+        ),
+        CollectedHotel(
+            hotel_name=f"{destination} Riverside Hotel",
+            price_per_night=850_000,
+            rating=4.3,
+            distance_to_center=1.1,
+        ),
+        CollectedHotel(
+            hotel_name=f"{destination} Comfort Suite",
+            price_per_night=1_050_000,
+            rating=4.5,
+            distance_to_center=0.7,
+        ),
+    ]
+
+
+def _estimate_food() -> list[FoodEstimate]:
+    return [
+        FoodEstimate(category="Local Food", cost_per_day=200_000),
+        FoodEstimate(category="Mixed", cost_per_day=350_000),
+        FoodEstimate(category="Premium", cost_per_day=600_000),
+    ]
+
+
+def _rank_plan_options(
+    query: TripQuery,
+    transportation: list[CollectedTransportation],
+    hotels: list[CollectedHotel],
+    food: list[FoodEstimate],
+) -> list[RankedPlanOption]:
+    if not transportation:
+        return []
+
+    nights = max(query.duration_days - 1, 0)
+    profiles = [
+        ("Budget", 0, 0),
+        ("Balanced", min(1, len(hotels) - 1), min(1, len(food) - 1)),
+        ("Comfort", min(2, len(hotels) - 1), min(2, len(food) - 1)),
+    ]
+    options: list[RankedPlanOption] = []
+
+    for idx, (label, hotel_idx, food_idx) in enumerate(profiles):
+        transport = transportation[min(idx, len(transportation) - 1)]
+        hotel = hotels[hotel_idx]
+        meal = food[food_idx]
+        transport_total = transport.price * query.travelers * 2
+        hotel_total = hotel.price_per_night * nights
+        food_total = meal.cost_per_day * query.duration_days * query.travelers
+        total = transport_total + hotel_total + food_total
+        budget_fit = _score_budget_fit(total, query.budget_vnd)
+        comfort_score = min(10, _transport_comfort(transport.transport_type) + hotel_idx + 1)
+        speed_score = _transport_speed(transport.transport_type)
+
+        options.append(
+            RankedPlanOption(
+                option=f"{transport.transport_type} + {hotel.hotel_name} + {meal.category}",
+                total_cost=total,
+                comfort_score=comfort_score,
+                speed_score=speed_score,
+                budget_fit=budget_fit,
+                decision_reason=(
+                    f"{label} plan: tổng chi phí dự kiến "
+                    f"{total:,} VNĐ cho {query.travelers} khách/{query.duration_days} ngày."
+                ),
+            )
+        )
+
+    return sorted(
+        options,
+        key=lambda option: (
+            -option.budget_fit,
+            -option.comfort_score if query.priority.value != "price" else option.total_cost,
+            option.total_cost,
+        ),
+    )
+
+
+def _score_budget_fit(total_cost: int, budget_vnd: int) -> int:
+    if budget_vnd <= 0:
+        return 5
+    if total_cost <= budget_vnd:
+        return max(1, min(10, round(10 - ((budget_vnd - total_cost) / budget_vnd) * 3)))
+    over_ratio = (total_cost - budget_vnd) / budget_vnd
+    return max(1, round(8 - over_ratio * 10))
+
+
+def _transport_comfort(transport_type: str) -> int:
+    return {"Bus": 5, "Train": 7, "Flight": 8}.get(transport_type, 5)
+
+
+def _transport_speed(transport_type: str) -> int:
+    return {"Bus": 4, "Train": 6, "Flight": 9}.get(transport_type, 4)
+
+
+def _build_decision(query: TripQuery, options: list[RankedPlanOption]) -> str | None:
+    if not options:
+        return None
+
+    best = options[0]
+    return (
+        f"Khuyến nghị chọn {best.option}. Phương án này đạt budget fit {best.budget_fit}/10, "
+        f"tổng dự kiến {best.total_cost:,} VNĐ so với ngân sách {query.budget_vnd:,} VNĐ."
+    )
+
+
+def _generate_itinerary(
+    query: TripQuery,
+    options: list[RankedPlanOption],
+    food: list[FoodEstimate],
+) -> list[ItineraryDay]:
+    if not options:
+        return []
+
+    daily_food = food[0].cost_per_day * query.travelers
+    days: list[ItineraryDay] = []
+    for day in range(1, query.duration_days + 1):
+        if day == 1:
+            title = "Đến nơi và làm quen khu trung tâm"
+            activities = [
+                f"Di chuyển từ {query.from_city} đến {query.to_city}",
+                "Nhận phòng, nghỉ ngơi và ăn đặc sản địa phương",
+                "Dạo khu trung tâm hoặc ven sông buổi tối",
+            ]
+            cost = daily_food + 150_000 * query.travelers
+        elif day == query.duration_days:
+            title = "Ăn sáng, mua quà và trở về"
+            activities = [
+                "Ăn sáng địa phương",
+                "Mua quà tại chợ hoặc khu đặc sản",
+                f"Chuẩn bị quay về {query.from_city}",
+            ]
+            cost = daily_food + 120_000 * query.travelers
+        else:
+            title = "Khám phá điểm nổi bật"
+            activities = [
+                f"Tham quan các điểm nổi bật ở {query.to_city}",
+                "Dành buổi chiều cho trải nghiệm nhẹ hoặc cà phê",
+                "Ăn tối theo ngân sách đã chọn",
+            ]
+            cost = daily_food + 250_000 * query.travelers
+
+        days.append(ItineraryDay(day=day, title=title, activities=activities, estimated_cost=cost))
+
+    return days
 
 
 def _parse_date_from_message(normalized: str) -> str:

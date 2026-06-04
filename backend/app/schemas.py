@@ -38,6 +38,9 @@ class TripQuery(BaseModel):
     from_city: str = Field(default="Ha Noi")
     to_city: str = Field(default="Da Nang")
     date: str = Field(default="2026-06-06")
+    duration_days: int = Field(default=3, ge=1, le=30)
+    budget_vnd: int = Field(default=5_000_000, ge=0)
+    travelers: int = Field(default=2, ge=1, le=20)
     pickup_text: str = Field(default="")
     user_location: UserLocation = Field(default_factory=UserLocation)
     priority: Priority = Priority.price
@@ -69,11 +72,55 @@ class WebSearchResult(BaseModel):
     source: str = "Tavily"
 
 
+class CollectedTransportation(BaseModel):
+    transport_type: str
+    provider: str
+    price: int
+    departure: str
+    arrival: str
+    pickup: str
+    source: str = "Internal data"
+
+
+class CollectedHotel(BaseModel):
+    hotel_name: str
+    price_per_night: int
+    rating: float
+    distance_to_center: float
+
+
+class FoodEstimate(BaseModel):
+    category: str
+    cost_per_day: int
+
+
+class RankedPlanOption(BaseModel):
+    option: str
+    total_cost: int
+    comfort_score: int
+    speed_score: int
+    budget_fit: int
+    decision_reason: str
+
+
+class ItineraryDay(BaseModel):
+    day: int
+    title: str
+    activities: list[str]
+    estimated_cost: int
+
+
 class AgentResponse(BaseModel):
     path: PathType
     summary: str
     tickets: list[TicketOption] = Field(default_factory=list)
     web_results: list[WebSearchResult] = Field(default_factory=list)
+    transportation_data: list[CollectedTransportation] = Field(default_factory=list)
+    hotels_data: list[CollectedHotel] = Field(default_factory=list)
+    food_estimates: list[FoodEstimate] = Field(default_factory=list)
+    ranked_plan_options: list[RankedPlanOption] = Field(default_factory=list)
+    decision: str | None = None
+    itinerary: list[ItineraryDay] = Field(default_factory=list)
     warning: str | None = None
     clarification_question: str | None = None
     clarification_options: list[ClarificationChoice] = Field(default_factory=list)
