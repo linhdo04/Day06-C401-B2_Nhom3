@@ -7,3 +7,6 @@ che__/
 .env
 venv/
 .pytest_cache/
+tests/
+__pycache__/
+Dockerfile
