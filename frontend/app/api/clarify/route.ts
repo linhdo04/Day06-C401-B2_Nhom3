@@ -1,17 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { AgentResponse } from "@/lib/types";
 
 const BACKEND = process.env.BACKEND_URL ?? "http://127.0.0.1:8000";
-
-const CLARIFY_RESPONSE: AgentResponse = {
-  path: "clarification",
-  summary: "Có nhiều điểm đón ở khu vực bạn chọn. Bạn muốn đón ở đâu?",
-  warning: null,
-  clarification_question: "Khu vực của bạn có nhiều điểm đón. Bạn muốn ưu tiên theo điều gì?",
-  clarification_options: ["pickup_place", "bus_operator"],
-  suggested_dates: [],
-  tickets: []
-};
+const BACKEND_TIMEOUT_MS = 15000;
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
@@ -19,13 +9,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: await req.text(),
-      signal: AbortSignal.timeout(3000),
+      signal: AbortSignal.timeout(BACKEND_TIMEOUT_MS),
     });
     if (res.ok) return NextResponse.json(await res.json());
-  } catch {
-    // backend unreachable — fall through to mock
+    const text = await res.text();
+    console.error("[api/clarify] backend error", res.status, text);
+    return NextResponse.json(
+      { error: `Backend clarify lỗi ${res.status}. Kiểm tra log FastAPI để xem trace.` },
+      { status: res.status }
+    );
+  } catch (error) {
+    console.error("[api/clarify] backend unreachable", error);
+    return NextResponse.json(
+      { error: "Chưa kết nối được Python backend tại http://127.0.0.1:8000." },
+      { status: 502 }
+    );
   }
-
-  await new Promise((r) => setTimeout(r, 600));
-  return NextResponse.json(CLARIFY_RESPONSE);
 }

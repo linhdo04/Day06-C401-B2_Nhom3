@@ -1,11 +1,15 @@
 from __future__ import annotations
 
+import logging
+import time
+
 from backend.app.agent.ranking import rank_tickets
 from backend.app.agent.tools import (
     detect_pickup_ambiguity,
     extract_trip_intent,
     filter_by_operator,
     search_mock_tickets,
+    search_web_ticket_sources,
     suggest_nearby_dates,
     search_and_format_tickets,
     resolve_pickup_ambiguity_tool,
@@ -13,6 +17,10 @@ from backend.app.agent.tools import (
 )
 import os
 import re
+from typing import Any
+
+from backend.app.agent.normalization import normalize_text
+from backend.app.observability import elapsed_ms, log_json, summarize_text
 from backend.app.schemas import (
     AgentResponse,
     ClarificationChoice,
@@ -22,12 +30,50 @@ from backend.app.schemas import (
     ChatRequest,
 )
 
+logger = logging.getLogger("smartbus.agent")
+
+
+CHAT_CITY_ALIASES = {
+    "hn": "Ha Noi",
+    "ha noi": "Ha Noi",
+    "hanoi": "Ha Noi",
+    "hai phong": "Hai Phong",
+    "cao bang": "Cao Bang",
+    "thanh hoa": "Thanh Hoa",
+    "da nang": "Da Nang",
+    "danang": "Da Nang",
+    "dn": "Da Nang",
+    "hue": "Hue",
+    "nha trang": "Nha Trang",
+    "ho chi minh": "Ho Chi Minh",
+    "sai gon": "Ho Chi Minh",
+    "saigon": "Ho Chi Minh",
+    "hcm": "Ho Chi Minh",
+    "tp hcm": "Ho Chi Minh",
+}
+
 
 def search_trip(query: TripQuery, *, skip_ambiguity: bool = False) -> AgentResponse:
+    start = time.perf_counter()
+    log_json(
+        logger,
+        logging.INFO,
+        "search.stage.intent_extract.start",
+        stage="thinking",
+        query=query.model_dump(),
+        skip_ambiguity=skip_ambiguity,
+    )
     intent = extract_trip_intent(query)
+    log_json(
+        logger,
+        logging.INFO,
+        "search.stage.intent_extract.done",
+        stage="thinking",
+        intent=intent.model_dump(),
+    )
 
     if intent.pickup_text and not skip_ambiguity and detect_pickup_ambiguity(intent.pickup_text):
-        return AgentResponse(
+        response = AgentResponse(
             path=PathType.clarification,
             summary="Cần xác nhận ý nghĩa của 'Thanh Phong' trước khi gợi ý vé.",
             clarification_question=(
@@ -39,29 +85,100 @@ def search_trip(query: TripQuery, *, skip_ambiguity: bool = False) -> AgentRespo
                 ClarificationChoice.bus_operator,
             ],
         )
+        log_json(
+            logger,
+            logging.INFO,
+            "search.response",
+            stage="thinking",
+            path=response.path.value,
+            ticket_count=len(response.tickets),
+            elapsed_ms=elapsed_ms(start),
+        )
+        return response
 
     tickets = search_mock_tickets(intent)
     if not tickets:
         suggested_dates = suggest_nearby_dates(intent)
-        return AgentResponse(
+        web_results = search_web_ticket_sources(intent)
+        if web_results:
+            response = AgentResponse(
+                path=PathType.low_confidence,
+                summary=(
+                    "Chưa có vé trong dữ liệu nội bộ; SmartBus đã tìm thấy nguồn web "
+                    "để bạn kiểm tra tuyến này."
+                ),
+                warning=(
+                    "Kết quả web cần được mở ở trang nhà cung cấp để xác nhận lại giá, giờ đi "
+                    "và tình trạng còn chỗ."
+                ),
+                web_results=web_results,
+                suggested_dates=suggested_dates,
+            )
+            log_json(
+                logger,
+                logging.INFO,
+                "search.response",
+                stage="thinking",
+                path=response.path.value,
+                ticket_count=0,
+                web_result_count=len(web_results),
+                suggested_dates=suggested_dates,
+                elapsed_ms=elapsed_ms(start),
+            )
+            return response
+
+        response = AgentResponse(
             path=PathType.failure,
             summary="Không tìm thấy vé phù hợp cho ngày đã chọn.",
-            warning="Thử đổi ngày đi hoặc nới lỏng điểm đón để xem thêm lựa chọn.",
+            warning=(
+                "Không tìm thấy dữ liệu nội bộ hoặc nguồn web từ Tavily. "
+                "Thử đổi ngày đi hoặc kiểm tra lại tên tuyến."
+            ),
             suggested_dates=suggested_dates,
         )
+        log_json(
+            logger,
+            logging.INFO,
+            "search.response",
+            stage="thinking",
+            path=response.path.value,
+            ticket_count=0,
+            suggested_dates=suggested_dates,
+            elapsed_ms=elapsed_ms(start),
+        )
+        return response
 
     ranked = rank_tickets(tickets, intent.priority)
     warning = _build_low_confidence_warning(ranked)
 
-    return AgentResponse(
+    response = AgentResponse(
         path=PathType.low_confidence if warning else PathType.happy,
         summary=f"Đã tìm thấy {len(ranked)} lựa chọn phù hợp nhất theo ưu tiên {intent.priority.value}.",
         tickets=ranked,
         warning=warning,
     )
+    log_json(
+        logger,
+        logging.INFO,
+        "search.response",
+        stage="thinking",
+        path=response.path.value,
+        ticket_count=len(response.tickets),
+        top_ticket_id=response.tickets[0].id if response.tickets else None,
+        elapsed_ms=elapsed_ms(start),
+    )
+    return response
 
 
 def clarify_trip(request: ClarificationRequest) -> AgentResponse:
+    log_json(
+        logger,
+        logging.INFO,
+        "clarify.request",
+        stage="thinking",
+        choice=request.choice.value,
+        query=request.query.model_dump(),
+    )
     if request.choice == ClarificationChoice.pickup_place:
         response = search_trip(request.query, skip_ambiguity=True)
         response.warning = (
@@ -88,6 +205,17 @@ def clarify_trip(request: ClarificationRequest) -> AgentResponse:
     )
 
 
+def _function_call_args(args: Any) -> dict:
+    if args is None:
+        return {}
+    if isinstance(args, dict):
+        return dict(args)
+    try:
+        return dict(args)
+    except Exception:
+        return {}
+
+
 def _build_low_confidence_warning(tickets: list) -> str | None:
     if len(tickets) == 1:
         ticket = tickets[0]
@@ -102,6 +230,67 @@ def _build_low_confidence_warning(tickets: list) -> str | None:
     return None
 
 
+def _parse_date_from_message(normalized: str) -> str:
+    date_match = re.search(r"(\d{4})[-/](\d{1,2})[-/](\d{1,2})", normalized)
+    if date_match:
+        return f"{date_match.group(1)}-{int(date_match.group(2)):02d}-{int(date_match.group(3)):02d}"
+
+    date_match_viet = re.search(r"(\d{1,2})[-/](\d{1,2})[-/](\d{4})", normalized)
+    if date_match_viet:
+        return f"{date_match_viet.group(3)}-{int(date_match_viet.group(2)):02d}-{int(date_match_viet.group(1)):02d}"
+
+    date_match_short = re.search(r"(ngay\s+)?(\d{1,2})[/-](\d{1,2})", normalized)
+    if date_match_short:
+        d = int(date_match_short.group(2))
+        m = int(date_match_short.group(3))
+        return f"2026-{m:02d}-{d:02d}"
+
+    return "2026-06-06"
+
+
+def _parse_priority_from_message(normalized: str) -> str:
+    if "re" in normalized or "gia" in normalized or "thap" in normalized:
+        return "price"
+    if "som" in normalized or "gio" in normalized or "thoi gian" in normalized:
+        return "time"
+    if "gan" in normalized or "don" in normalized or "khoang cach" in normalized:
+        return "pickup_distance"
+    return "price"
+
+
+def _parse_route_from_message(message: str) -> tuple[str, str, str, str] | None:
+    normalized = normalize_text(message)
+    if not any(keyword in normalized for keyword in ("tim", "ve", "xe", "di", "den", "toi")):
+        return None
+
+    matches: list[tuple[int, int, str]] = []
+    for alias, city in sorted(CHAT_CITY_ALIASES.items(), key=lambda item: len(item[0]), reverse=True):
+        pattern = rf"(?<!\w){re.escape(alias)}(?!\w)"
+        for match in re.finditer(pattern, normalized):
+            matches.append((match.start(), match.end(), city))
+
+    matches.sort(key=lambda item: (item[0], -(item[1] - item[0])))
+    ordered_cities: list[str] = []
+    occupied_until = -1
+    for start, end, city in matches:
+        if start < occupied_until:
+            continue
+        occupied_until = end
+        if city not in ordered_cities:
+            ordered_cities.append(city)
+
+    if len(ordered_cities) < 2:
+        return None
+
+    from_city, to_city = ordered_cities[0], ordered_cities[1]
+    return (
+        from_city,
+        to_city,
+        _parse_date_from_message(normalized),
+        _parse_priority_from_message(normalized),
+    )
+
+
 def mock_chat_agent(message: str, history: list) -> str:
     normalized = message.lower()
 
@@ -110,6 +299,12 @@ def mock_chat_agent(message: str, history: list) -> str:
             "Bạn muốn được đón tại địa danh Giáo xứ Thanh Phong (Phú Mỹ, Vũng Tàu), "
             "hay muốn tìm Nhà xe Thanh Phong?"
         )
+
+    parsed_route = _parse_route_from_message(message)
+    if parsed_route:
+        from_city, to_city, date, priority = parsed_route
+        from backend.app.agent.tools import search_and_format_tickets
+        return search_and_format_tickets(from_city, to_city, date, priority)
 
     from_city = None
     to_city = None
@@ -168,8 +363,42 @@ def mock_chat_agent(message: str, history: list) -> str:
 
 
 def chat_agent(request: ChatRequest) -> str:
+    start = time.perf_counter()
+    log_json(
+        logger,
+        logging.INFO,
+        "chat.request",
+        stage="thinking",
+        message=summarize_text(request.message),
+        history_count=len(request.history),
+        gemini_configured=bool(os.getenv("GEMINI_API_KEY")),
+        tavily_configured=bool(os.getenv("TAVILY_API_KEY")),
+    )
+
+    parsed_route = _parse_route_from_message(request.message)
+    if parsed_route and "thanh phong" not in normalize_text(request.message):
+        from_city, to_city, date, priority = parsed_route
+        log_json(
+            logger,
+            logging.INFO,
+            "chat.route_detected",
+            stage="thinking",
+            from_city=from_city,
+            to_city=to_city,
+            date=date,
+            priority=priority,
+        )
+        return search_and_format_tickets(from_city, to_city, date, priority)
+
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
+        log_json(
+            logger,
+            logging.WARNING,
+            "chat.fallback",
+            stage="thinking",
+            reason="missing_GEMINI_API_KEY",
+        )
         return mock_chat_agent(request.message, request.history)
 
     try:
@@ -177,6 +406,13 @@ def chat_agent(request: ChatRequest) -> str:
         from google.genai import types
 
         client = genai.Client(api_key=api_key)
+        log_json(
+            logger,
+            logging.INFO,
+            "chat.stage.build_contents",
+            stage="thinking",
+            history_count=len(request.history),
+        )
 
         # Build conversation contents from history
         contents = []
@@ -219,18 +455,39 @@ def chat_agent(request: ChatRequest) -> str:
         }
 
         # First LLM call
+        llm_start = time.perf_counter()
+        log_json(
+            logger,
+            logging.INFO,
+            "llm.chat.request",
+            stage="llm",
+            model="gemini-2.5-flash",
+            turn="initial",
+            tools=list(tool_registry.keys()),
+        )
         response = client.models.generate_content(
             model="gemini-2.5-flash",
             contents=contents,
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
                 tools=list(tool_registry.values()),
+                automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
             )
+        )
+        log_json(
+            logger,
+            logging.INFO,
+            "llm.chat.response",
+            stage="llm",
+            turn="initial",
+            elapsed_ms=elapsed_ms(llm_start),
+            tool_calls=[fc.name for fc in (response.function_calls or [])],
+            text_preview=summarize_text(response.text or ""),
         )
 
         # ReAct loop: execute tool calls and feed results back
         MAX_TURNS = 3
-        for _ in range(MAX_TURNS):
+        for turn in range(1, MAX_TURNS + 1):
             if not response.function_calls:
                 break
 
@@ -241,13 +498,45 @@ def chat_agent(request: ChatRequest) -> str:
             tool_response_parts = []
             for fc in response.function_calls:
                 fn = tool_registry.get(fc.name)
+                args = _function_call_args(fc.args)
+                tool_start = time.perf_counter()
+                log_json(
+                    logger,
+                    logging.INFO,
+                    "llm.tool_call",
+                    stage="tool",
+                    turn=turn,
+                    tool=fc.name,
+                    args=args,
+                )
                 if fn is None:
                     result = f"Error: tool '{fc.name}' không tồn tại."
                 else:
                     try:
-                        result = fn(**fc.args)
+                        result = fn(**args)
                     except Exception as tool_err:
                         result = f"Lỗi khi gọi tool '{fc.name}': {tool_err}"
+                        log_json(
+                            logger,
+                            logging.ERROR,
+                            "llm.tool_error",
+                            stage="tool",
+                            turn=turn,
+                            tool=fc.name,
+                            error=str(tool_err),
+                            elapsed_ms=elapsed_ms(tool_start),
+                        )
+
+                log_json(
+                    logger,
+                    logging.INFO,
+                    "llm.tool_response",
+                    stage="tool",
+                    turn=turn,
+                    tool=fc.name,
+                    elapsed_ms=elapsed_ms(tool_start),
+                    result_preview=summarize_text(result),
+                )
 
                 tool_response_parts.append(
                     types.Part.from_function_response(
@@ -257,21 +546,57 @@ def chat_agent(request: ChatRequest) -> str:
                 )
 
             contents.append(
-                types.Content(role="tool", parts=tool_response_parts)
+                types.Content(role="user", parts=tool_response_parts)
             )
 
             # Next LLM turn to synthesise tool results
+            llm_start = time.perf_counter()
+            log_json(
+                logger,
+                logging.INFO,
+                "llm.chat.request",
+                stage="llm",
+                model="gemini-2.5-flash",
+                turn=f"after_tool_{turn}",
+            )
             response = client.models.generate_content(
                 model="gemini-2.5-flash",
                 contents=contents,
                 config=types.GenerateContentConfig(
                     system_instruction=system_instruction,
+                    tools=list(tool_registry.values()),
+                    automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
                 )
             )
+            log_json(
+                logger,
+                logging.INFO,
+                "llm.chat.response",
+                stage="llm",
+                turn=f"after_tool_{turn}",
+                elapsed_ms=elapsed_ms(llm_start),
+                tool_calls=[fc.name for fc in (response.function_calls or [])],
+                text_preview=summarize_text(response.text or ""),
+            )
 
-        return response.text or "Tôi không nhận được phản hồi."
+        final_text = response.text or "Tôi không nhận được phản hồi."
+        log_json(
+            logger,
+            logging.INFO,
+            "chat.response",
+            stage="thinking",
+            elapsed_ms=elapsed_ms(start),
+            reply_preview=summarize_text(final_text),
+        )
+        return final_text
 
     except Exception as e:
-        print(f"[chat_agent] Gemini error: {e}")
+        log_json(
+            logger,
+            logging.ERROR,
+            "chat.error",
+            stage="thinking",
+            error=str(e),
+            elapsed_ms=elapsed_ms(start),
+        )
         return mock_chat_agent(request.message, request.history)
-

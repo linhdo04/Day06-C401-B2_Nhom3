@@ -11,14 +11,19 @@ Bao gồm:
 """
 from __future__ import annotations
 
+import logging
 import os
+import time
 from urllib.parse import quote_plus
 
 import requests
 
 from backend.app.agent.normalization import normalize_city, normalize_text
 from backend.app.data.mock_tickets import MOCK_TICKETS
-from backend.app.schemas import MockTicket, TripQuery
+from backend.app.observability import elapsed_ms, log_json, summarize_text
+from backend.app.schemas import MockTicket, TripQuery, WebSearchResult
+
+logger = logging.getLogger("smartbus.tools")
 
 
 # ---------------------------------------------------------------------------
@@ -43,16 +48,31 @@ def detect_pickup_ambiguity(pickup_text: str) -> bool:
 
 
 def search_mock_tickets(query: TripQuery) -> list[MockTicket]:
+    start = time.perf_counter()
     from_city = normalize_city(query.from_city)
     to_city = normalize_city(query.to_city)
 
-    return [
+    tickets = [
         ticket
         for ticket in MOCK_TICKETS
         if normalize_city(ticket.from_city) == from_city
         and normalize_city(ticket.to_city) == to_city
         and ticket.date == query.date
     ]
+    log_json(
+        logger,
+        logging.INFO,
+        "tool.search_mock_tickets",
+        stage="tool",
+        from_city=query.from_city,
+        to_city=query.to_city,
+        normalized_from=from_city,
+        normalized_to=to_city,
+        date=query.date,
+        result_count=len(tickets),
+        elapsed_ms=elapsed_ms(start),
+    )
+    return tickets
 
 
 def filter_by_operator(tickets: list[MockTicket], operator_text: str) -> list[MockTicket]:
@@ -94,26 +114,111 @@ def _call_tavily(query: str, max_results: int = 5) -> list[dict]:
     """
     api_key = os.getenv("TAVILY_API_KEY")
     if not api_key:
+        log_json(
+            logger,
+            logging.WARNING,
+            "tool.tavily.skipped",
+            stage="tool",
+            reason="missing_TAVILY_API_KEY",
+            query=query,
+        )
         return []
 
+    start = time.perf_counter()
     try:
+        log_json(
+            logger,
+            logging.INFO,
+            "tool.tavily.request",
+            stage="tool",
+            query=query,
+            max_results=max_results,
+        )
         resp = requests.post(
             "https://api.tavily.com/search",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
             json={
-                "api_key": api_key,
                 "query": query,
                 "max_results": max_results,
                 "search_depth": "basic",
+                "topic": "general",
+                "country": "vietnam",
                 "include_answer": False,
                 "include_raw_content": False,
+                "include_favicon": True,
             },
             timeout=10,
         )
         resp.raise_for_status()
-        return resp.json().get("results", [])
+        results = resp.json().get("results", [])
+        log_json(
+            logger,
+            logging.INFO,
+            "tool.tavily.response",
+            stage="tool",
+            status_code=resp.status_code,
+            result_count=len(results),
+            elapsed_ms=elapsed_ms(start),
+        )
+        return results
     except Exception as exc:
-        print(f"[Tavily] Error: {exc}")
+        status_code = getattr(getattr(exc, "response", None), "status_code", None)
+        log_json(
+            logger,
+            logging.ERROR,
+            "tool.tavily.error",
+            stage="tool",
+            error=str(exc),
+            status_code=status_code,
+            elapsed_ms=elapsed_ms(start),
+        )
         return []
+
+
+def _build_ticket_search_query(query: TripQuery) -> str:
+    return (
+        f"vé xe khách {query.from_city} đi {query.to_city} ngày {query.date} "
+        "giá vé nhà xe đặt vé Vexere MoMo Traveloka"
+    )
+
+
+def search_web_ticket_sources(query: TripQuery, max_results: int = 5) -> list[WebSearchResult]:
+    start = time.perf_counter()
+    raw_results = _call_tavily(_build_ticket_search_query(query), max_results=max_results)
+    seen_urls: set[str] = set()
+    web_results: list[WebSearchResult] = []
+
+    for result in raw_results:
+        title = str(result.get("title") or "").strip()
+        url = str(result.get("url") or "").strip()
+        if not title or not url or url in seen_urls:
+            continue
+
+        seen_urls.add(url)
+        content = str(result.get("content") or "").strip()
+        web_results.append(
+            WebSearchResult(
+                title=title,
+                url=url,
+                snippet=summarize_text(content, limit=260),
+            )
+        )
+
+    log_json(
+        logger,
+        logging.INFO,
+        "tool.search_web_ticket_sources",
+        stage="tool",
+        from_city=query.from_city,
+        to_city=query.to_city,
+        date=query.date,
+        result_count=len(web_results),
+        elapsed_ms=elapsed_ms(start),
+    )
+    return web_results
 
 
 def _extract_ticket_info_with_llm(raw_results: list[dict], query_context: str) -> str:
@@ -122,6 +227,14 @@ def _extract_ticket_info_with_llm(raw_results: list[dict], query_context: str) -
     các đoạn text thô của Tavily. Fallback sang tóm tắt đơn giản nếu không có API key.
     """
     if not raw_results:
+        log_json(
+            logger,
+            logging.INFO,
+            "tool.extract_ticket_info.skipped",
+            stage="tool",
+            reason="empty_raw_results",
+            query_context=query_context,
+        )
         return "Không tìm thấy thông tin trên web."
 
     # Build raw text từ Tavily snippets
@@ -133,6 +246,14 @@ def _extract_ticket_info_with_llm(raw_results: list[dict], query_context: str) -
     gemini_key = os.getenv("GEMINI_API_KEY")
     if not gemini_key:
         # Fallback: trả về tóm tắt thô
+        log_json(
+            logger,
+            logging.WARNING,
+            "tool.extract_ticket_info.fallback",
+            stage="tool",
+            reason="missing_GEMINI_API_KEY",
+            raw_result_count=len(raw_results),
+        )
         lines = [f"- {r.get('title', 'N/A')}: {r.get('url', '')}" for r in raw_results]
         return "Kết quả tìm kiếm web:\n" + "\n".join(lines)
 
@@ -151,6 +272,16 @@ def _extract_ticket_info_with_llm(raw_results: list[dict], query_context: str) -
             f"Văn bản:\n{snippets}"
         )
 
+        start = time.perf_counter()
+        log_json(
+            logger,
+            logging.INFO,
+            "llm.extract_ticket_info.request",
+            stage="llm",
+            model="gemini-2.5-flash",
+            raw_result_count=len(raw_results),
+            query_context=query_context,
+        )
         response = client.models.generate_content(
             model="gemini-2.5-flash",
             contents=prompt,
@@ -158,9 +289,24 @@ def _extract_ticket_info_with_llm(raw_results: list[dict], query_context: str) -
                 temperature=0.1,
             ),
         )
-        return response.text or "Không trích xuất được thông tin."
+        text = response.text or "Không trích xuất được thông tin."
+        log_json(
+            logger,
+            logging.INFO,
+            "llm.extract_ticket_info.response",
+            stage="llm",
+            elapsed_ms=elapsed_ms(start),
+            response_preview=summarize_text(text),
+        )
+        return text
     except Exception as exc:
-        print(f"[LLM Extract] Error: {exc}")
+        log_json(
+            logger,
+            logging.ERROR,
+            "llm.extract_ticket_info.error",
+            stage="llm",
+            error=str(exc),
+        )
         lines = [f"- {r.get('title', 'N/A')}: {r.get('url', '')}" for r in raw_results]
         return "Kết quả tìm kiếm web:\n" + "\n".join(lines)
 
@@ -219,6 +365,21 @@ def search_and_format_tickets(
     )
 
     response = search_trip(query, skip_ambiguity=True)
+
+    if response.web_results:
+        result = (
+            f"Chưa có vé trong database nội bộ cho chặng {from_city} → {to_city} ngày {date}.\n"
+            "Tôi tìm thấy các nguồn web nên bạn có thể mở để kiểm tra giá/giờ còn chỗ:\n\n"
+        )
+        for idx, source in enumerate(response.web_results, 1):
+            result += f"{idx}. **{source.title}**\n   {source.url}\n"
+            if source.snippet:
+                result += f"   {source.snippet}\n"
+            result += "\n"
+
+        if response.warning:
+            result += f"Lưu ý: {response.warning}\n"
+        return result
 
     if response.path == "failure":
         dates_str = ", ".join(response.suggested_dates) if response.suggested_dates else "không có"

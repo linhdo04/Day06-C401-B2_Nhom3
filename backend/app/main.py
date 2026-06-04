@@ -1,10 +1,22 @@
-from dotenv import load_dotenv
-load_dotenv()
+from __future__ import annotations
+
+import logging
+import time
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi import Request
 
+from backend.app.config import load_environment
 from backend.app.agent.service import clarify_trip, search_trip, chat_agent
+from backend.app.observability import (
+    configure_logging,
+    elapsed_ms,
+    log_json,
+    new_request_id,
+    request_id_ctx,
+    summarize_text,
+)
 from backend.app.schemas import (
     AgentResponse,
     ClarificationRequest,
@@ -13,6 +25,10 @@ from backend.app.schemas import (
     ChatRequest,
     ChatResponse,
 )
+
+load_environment()
+configure_logging()
+logger = logging.getLogger("smartbus.api")
 
 app = FastAPI(
     title="SmartBus AI",
@@ -30,6 +46,54 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def request_logging_middleware(request: Request, call_next):
+    request_id = request.headers.get("x-request-id") or new_request_id()
+    token = request_id_ctx.set(request_id)
+    start = time.perf_counter()
+
+    body = await request.body()
+    log_json(
+        logger,
+        logging.INFO,
+        "http.request",
+        method=request.method,
+        path=request.url.path,
+        query=str(request.url.query),
+        body=summarize_text(body.decode("utf-8", errors="replace")),
+    )
+
+    async def receive():
+        return {"type": "http.request", "body": body, "more_body": False}
+
+    try:
+        response = await call_next(Request(request.scope, receive))
+        log_json(
+            logger,
+            logging.INFO,
+            "http.response",
+            method=request.method,
+            path=request.url.path,
+            status_code=response.status_code,
+            elapsed_ms=elapsed_ms(start),
+        )
+        response.headers["x-request-id"] = request_id
+        return response
+    except Exception as exc:
+        log_json(
+            logger,
+            logging.ERROR,
+            "http.error",
+            method=request.method,
+            path=request.url.path,
+            error=str(exc),
+            elapsed_ms=elapsed_ms(start),
+        )
+        raise
+    finally:
+        request_id_ctx.reset(token)
 
 
 @app.get("/health", response_model=HealthResponse)
