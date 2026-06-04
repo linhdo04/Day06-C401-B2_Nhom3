@@ -54,10 +54,18 @@ class TicketOption(BaseModel):
     rank_reason: str
 
 
+class WebSearchResult(BaseModel):
+    title: str
+    url: str
+    snippet: str = ""
+    source: str = "Tavily"
+
+
 class AgentResponse(BaseModel):
     path: PathType
     summary: str
     tickets: list[TicketOption] = Field(default_factory=list)
+    web_results: list[WebSearchResult] = Field(default_factory=list)
     warning: str | None = None
     clarification_question: str | None = None
     clarification_options: list[ClarificationChoice] = Field(default_factory=list)
@@ -67,6 +75,20 @@ class AgentResponse(BaseModel):
 class ClarificationRequest(BaseModel):
     query: TripQuery
     choice: ClarificationChoice
+
+
+class ChatMessage(BaseModel):
+    role: str
+    text: str
+
+
+class ChatRequest(BaseModel):
+    message: str
+    history: list[ChatMessage] = []
+
+
+class ChatResponse(BaseModel):
+    reply: str
 
 
 class HealthResponse(BaseModel):

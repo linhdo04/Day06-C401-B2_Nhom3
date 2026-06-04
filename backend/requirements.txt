@@ -1,4 +1,16 @@
+# Web framework
 fastapi>=0.115,<1
 pydantic>=2.9,<3
 uvicorn[standard]>=0.30,<1
+
+# AI / LLM
+google-genai>=1.0,<2
+
+# Web search (Tavily)
+requests>=2.32,<3
+
+# Env config
+python-dotenv>=1.0,<2
+
+# Testing
 pytest>=8,<9

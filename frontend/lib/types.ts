@@ -35,10 +35,18 @@ export type TicketOption = {
   rank_reason: string;
 };
 
+export type WebSearchResult = {
+  title: string;
+  url: string;
+  snippet: string;
+  source: string;
+};
+
 export type AgentResponse = {
   path: PathType;
   summary: string;
   tickets: TicketOption[];
+  web_results: WebSearchResult[];
   warning: string | null;
   clarification_question: string | null;
   clarification_options: ClarificationChoice[];

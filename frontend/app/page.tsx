@@ -10,16 +10,16 @@ import { ResultsList } from "@/components/ResultsList";
 import { SearchForm } from "@/components/SearchForm";
 
 const defaultQuery: TripQuery = {
-  from_city: "",
-  to_city: "",
-  date: "",
+  from_city: "Ha Noi",
+  to_city: "Da Nang",
+  date: "2026-06-06",
   pickup_text: "",
   user_location: {
-    label: "",
-    lat: 0,
-    lng: 0
+    label: "Cau Giay, Hanoi",
+    lat: 21.0369,
+    lng: 105.7897
   },
-  priority: "pickup_distance"
+  priority: "price"
 };
 
 function buildApiError(): AgentResponse {
@@ -27,6 +27,7 @@ function buildApiError(): AgentResponse {
     path: "failure",
     summary: "Chưa kết nối được Python backend.",
     tickets: [],
+    web_results: [],
     warning: "Hãy chạy `npm run backend` trước khi demo giao diện.",
     clarification_question: null,
     clarification_options: [],

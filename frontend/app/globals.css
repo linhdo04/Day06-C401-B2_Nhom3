@@ -373,12 +373,14 @@ input {
   white-space: nowrap;
 }
 
-.ticket-list {
+.ticket-list,
+.web-result-list {
   display: grid;
   gap: 12px;
 }
 
-.ticket-card {
+.ticket-card,
+.web-result-card {
   display: grid;
   grid-template-columns: 42px minmax(0, 1fr);
   gap: 14px;
@@ -388,7 +390,8 @@ input {
   background: var(--surface);
 }
 
-.ticket-card:hover {
+.ticket-card:hover,
+.web-result-card:hover {
   border-color: rgba(0, 127, 115, 0.42);
   box-shadow: 0 14px 32px rgba(23, 32, 29, 0.08);
 }
@@ -404,7 +407,8 @@ input {
   font-weight: 850;
 }
 
-.ticket-main {
+.ticket-main,
+.web-result-main {
   display: grid;
   min-width: 0;
   gap: 12px;
@@ -425,10 +429,38 @@ input {
 }
 
 .provider {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   margin-bottom: 3px;
   color: var(--muted);
   font-size: 0.82rem;
   font-weight: 800;
+}
+
+.web-result-main h3 {
+  overflow-wrap: anywhere;
+}
+
+.web-result-main p:not(.provider) {
+  margin-bottom: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.web-result-main a {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--surface);
+  font-weight: 750;
 }
 
 .metric-row {
@@ -805,7 +837,8 @@ input {
     white-space: normal;
   }
 
-  .ticket-card {
+  .ticket-card,
+  .web-result-card {
     grid-template-columns: 1fr;
   }
 
