@@ -1,7 +1,6 @@
 import { ArrowUpRight, Globe2, SearchCheck } from "lucide-react";
 
 import type { AgentResponse, TripQuery } from "@/lib/types";
-import { PathStatus } from "./PathStatus";
 
 type WebResultsPanelProps = {
   query: TripQuery;
@@ -11,14 +10,13 @@ type WebResultsPanelProps = {
 export function WebResultsPanel({ query, result }: WebResultsPanelProps) {
   return (
     <div className="results-stack">
-      <PathStatus result={result} />
-
       <div className="result-heading">
         <div>
-          <p className="eyebrow">Nguồn web cần xác nhận</p>
+          <p className="eyebrow">Nguồn tham khảo từ web</p>
           <h2>
             {query.from_city} → {query.to_city}
           </h2>
+          <p className="result-note">Mở nguồn phù hợp để xem chi tiết giá, giờ đi, tình trạng chỗ và điều kiện đặt.</p>
         </div>
         <span className="date-chip">{query.date}</span>
       </div>
@@ -43,7 +41,7 @@ export function WebResultsPanel({ query, result }: WebResultsPanelProps) {
 
               <a href={source.url} rel="noreferrer" target="_blank">
                 <SearchCheck aria-hidden="true" size={16} />
-                Mở nguồn kiểm tra
+                Mở nguồn
                 <ArrowUpRight aria-hidden="true" size={14} />
               </a>
             </div>

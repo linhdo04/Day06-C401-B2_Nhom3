@@ -14,6 +14,8 @@ from backend.app.agent.tools import (
     search_and_format_tickets,
     resolve_pickup_ambiguity_tool,
     search_by_date_tool,
+    search_stay_options_tool,
+    search_travel_guide_tool,
 )
 import os
 import re
@@ -30,7 +32,7 @@ from backend.app.schemas import (
     ChatRequest,
 )
 
-logger = logging.getLogger("smartbus.agent")
+logger = logging.getLogger("smarttravel.agent")
 
 
 CHAT_CITY_ALIASES = {
@@ -103,14 +105,8 @@ def search_trip(query: TripQuery, *, skip_ambiguity: bool = False) -> AgentRespo
         if web_results:
             response = AgentResponse(
                 path=PathType.low_confidence,
-                summary=(
-                    "Chưa có vé trong dữ liệu nội bộ; SmartBus đã tìm thấy nguồn web "
-                    "để bạn kiểm tra tuyến này."
-                ),
-                warning=(
-                    "Kết quả web cần được mở ở trang nhà cung cấp để xác nhận lại giá, giờ đi "
-                    "và tình trạng còn chỗ."
-                ),
+                summary="Tìm thấy nguồn tham khảo từ web cho tuyến này.",
+                warning=None,
                 web_results=web_results,
                 suggested_dates=suggested_dates,
             )
@@ -351,15 +347,19 @@ def mock_chat_agent(message: str, history: list) -> str:
         return search_and_format_tickets(from_city, to_city, date, priority)
 
     if "giá" in normalized or "vé" in normalized or "tiền" in normalized:
-        return "Giá vé thường dao động từ 150.000 – 500.000 VNĐ tùy tuyến và hãng xe. Bạn có thể chọn ưu tiên 'Giá thấp nhất' để SmartBus xếp hạng theo giá."
+        return "Giá vé thay đổi theo phương tiện, tuyến và thời điểm. Bạn có thể tìm tuyến cụ thể để SmartTravel gợi ý vé xe, tàu hoặc máy bay từ dữ liệu nội bộ và nguồn web."
     if "giờ" in normalized or "sớm" in normalized or "muộn" in normalized:
-        return "Bạn muốn đi sớm hay tối? Chọn ưu tiên 'Giờ đi sớm nhất' và SmartBus sẽ hiển thị các chuyến sớm nhất trong ngày."
+        return "Bạn muốn đi sớm hay tối? Chọn ưu tiên 'Giờ đi' để SmartTravel gợi ý phương án khởi hành phù hợp."
     if "đón" in normalized or "pickup" in normalized:
-        return "Nhập địa điểm đón của bạn vào ô 'Điểm đón', SmartBus sẽ tính khoảng cách từ bạn đến từng điểm đón và xếp hạng theo gần nhất."
+        return "Nhập điểm đón, nhà ga, sân bay hoặc ghi chú vị trí để SmartTravel ưu tiên phương án thuận tiện hơn."
+    if any(word in normalized for word in ("khách sạn", "khach san", "đặt phòng", "dat phong", "homestay", "lưu trú", "luu tru")):
+        return search_stay_options_tool(message)
+    if any(word in normalized for word in ("lịch trình", "lich trinh", "đi đâu", "di dau", "chơi", "choi", "du lịch", "du lich")):
+        return search_travel_guide_tool(message)
     if "đặt" in normalized or "book" in normalized or "mua" in normalized:
-        return "Sau khi tìm được vé phù hợp, bấm 'Đặt vé' trên thẻ kết quả để chuyển đến trang đặt vé của nhà cung cấp."
+        return "Sau khi tìm được phương án phù hợp, mở nguồn hoặc bấm 'Đặt / kiểm tra' để sang trang nhà cung cấp. Tôi cũng có thể gợi ý khu vực lưu trú và nguồn đặt phòng."
 
-    return "Tôi hiểu câu hỏi của bạn. Hãy thử tìm kiếm bằng cách hỏi tôi tìm vé (ví dụ: 'tìm vé từ Hà Nội đi Đà Nẵng ngày 6/6') hoặc hỏi về điểm đón, giá vé!"
+    return "Tôi hiểu câu hỏi của bạn. Hãy hỏi tôi tìm vé xe/tàu/máy bay, gợi ý lịch trình, địa điểm du lịch, trải nghiệm nên thử hoặc khu vực đặt phòng."
 
 
 def chat_agent(request: ChatRequest) -> str:
@@ -435,16 +435,19 @@ def chat_agent(request: ChatRequest) -> str:
             )
 
         system_instruction = (
-            "Bạn là Trợ lý SmartBus, AI chuyên hỗ trợ tìm vé xe khách liên tỉnh Việt Nam.\n"
+            "Bạn là Trợ lý SmartTravel, AI hỗ trợ lập kế hoạch du lịch tại Việt Nam.\n"
             "NGUYÊN TẮC SỬ DỤNG TOOLS:\n"
             "1. Khi khách hỏi tìm vé với TUYẾN CỤ THỂ (có từ/đến), gọi `search_and_format_tickets` "
-            "để tìm trong database nội bộ trước.\n"
-            "2. Nếu không có vé trong database, hoặc khách hỏi về GIÁ VÉ / NHÀ XE THỰC TẾ trên mạng, "
+            "để tìm trong database nội bộ trước. Database hiện có dữ liệu mẫu cho một số tuyến xe.\n"
+            "2. Nếu không có dữ liệu nội bộ, hoặc khách hỏi giá vé/giờ đi thực tế cho vé xe, tàu, máy bay, "
             "gọi `search_by_date_tool` để tìm qua web (Tavily) rồi trả kết quả đã được trích xuất.\n"
             "3. Khi khách nhắc tới điểm đón 'Thanh Phong', luôn gọi `resolve_pickup_ambiguity_tool` "
             "và hỏi rõ trước khi tìm vé.\n"
-            "4. Không bao giờ bịa thông tin giá vé hoặc nhà xe. Chỉ dùng kết quả từ tools.\n"
-            "5. Trả lời ngắn gọn, lịch sự, hoàn toàn bằng tiếng Việt."
+            "4. Khi khách hỏi lịch trình, tiện ích, địa điểm du lịch, nên đi như thế nào, trải nghiệm, ăn uống, "
+            "hoặc khu vực đặt phòng, gọi `search_travel_guide_tool` để lấy nguồn web trước khi gợi ý.\n"
+            "5. Khi khách hỏi riêng về khách sạn, homestay hoặc đặt phòng, gọi `search_stay_options_tool`.\n"
+            "6. Không bao giờ bịa giá vé, giờ đi, tình trạng phòng hoặc còn chỗ. Nêu rõ cần mở nguồn nhà cung cấp để xác nhận.\n"
+            "7. Trả lời ngắn gọn, lịch sự, hoàn toàn bằng tiếng Việt."
         )
 
         # Tool registry: maps function name -> callable
@@ -452,6 +455,8 @@ def chat_agent(request: ChatRequest) -> str:
             "search_and_format_tickets": search_and_format_tickets,
             "search_by_date_tool": search_by_date_tool,
             "resolve_pickup_ambiguity_tool": resolve_pickup_ambiguity_tool,
+            "search_travel_guide_tool": search_travel_guide_tool,
+            "search_stay_options_tool": search_stay_options_tool,
         }
 
         # First LLM call

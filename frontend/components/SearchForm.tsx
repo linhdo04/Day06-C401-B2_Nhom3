@@ -1,9 +1,10 @@
 "use client";
 
 import { FormEvent } from "react";
-import { CalendarDays, MapPin, Search } from "lucide-react";
+import { BusFront, CalendarDays, MapPin, Plane, Search, Sparkles, TrainFront } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
-import type { Priority, TripQuery } from "@/lib/types";
+import type { Priority, TransportMode, TripQuery } from "@/lib/types";
 import { VIETNAMESE_CITIES } from "@/lib/vietnamese-cities";
 import { LocationAutocomplete } from "./LocationAutocomplete";
 import { PriorityControl } from "./PriorityControl";
@@ -15,6 +16,17 @@ type SearchFormProps = {
   onPriorityChange: (priority: Priority) => void;
   onSubmit: (query: TripQuery) => void;
 };
+
+const transportOptions: Array<{
+  value: TransportMode;
+  label: string;
+  icon: LucideIcon;
+}> = [
+  { value: "bus", label: "Xe", icon: BusFront },
+  { value: "train", label: "Tàu", icon: TrainFront },
+  { value: "flight", label: "Máy bay", icon: Plane },
+  { value: "all", label: "Tất cả", icon: Sparkles }
+];
 
 export function SearchForm({
   query,
@@ -50,7 +62,7 @@ export function SearchForm({
 
       <div className="field-grid">
         <label>
-          <span>Từ</span>
+          <span>Điểm đi</span>
           <div className="input-wrap">
             <MapPin aria-hidden="true" size={18} />
             <input
@@ -65,7 +77,7 @@ export function SearchForm({
         </label>
 
         <label>
-          <span>Đến</span>
+          <span>Điểm đến</span>
           <div className="input-wrap">
             <MapPin aria-hidden="true" size={18} />
             <input
@@ -81,7 +93,7 @@ export function SearchForm({
       </div>
 
       <label>
-        <span>Ngày đi</span>
+        <span>Ngày khởi hành</span>
         <div className="input-wrap">
           <CalendarDays aria-hidden="true" size={18} />
           <input
@@ -94,19 +106,41 @@ export function SearchForm({
       </label>
 
       <label>
-        <span>Điểm đón hoặc ghi chú vị trí</span>
+        <span>Điểm đón, ga, sân bay hoặc ghi chú vị trí</span>
         <LocationAutocomplete
           value={query.pickup_text}
           onChange={handlePickupChange}
-          placeholder="Cầu Giấy hoặc Giáo xứ Thanh Phong"
+          placeholder="Cầu Giấy, ga Hà Nội hoặc sân bay Nội Bài"
         />
       </label>
+
+      <fieldset className="priority-control transport-control">
+        <legend>Phương tiện</legend>
+        <div className="segment-row" data-testid="transport-mode-control">
+          {transportOptions.map((option) => {
+            const Icon = option.icon;
+            return (
+              <button
+                aria-pressed={query.transport_mode === option.value}
+                className={query.transport_mode === option.value ? "segment active" : "segment"}
+                data-testid={`transport-${option.value}`}
+                key={option.value}
+                onClick={() => updateField("transport_mode", option.value)}
+                type="button"
+              >
+                <Icon aria-hidden={true} size={16} />
+                <span>{option.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </fieldset>
 
       <PriorityControl value={query.priority} onChange={onPriorityChange} />
 
       <button className="primary-action" data-testid="search-submit" type="submit" disabled={loading}>
         <Search aria-hidden="true" size={18} />
-        <span>{loading ? "Đang tìm" : "Tìm vé phù hợp"}</span>
+        <span>{loading ? "Đang tìm" : "Tìm phương án"}</span>
       </button>
     </form>
   );

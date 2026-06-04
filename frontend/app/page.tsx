@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { AlertCircle, BusFront, Loader2, Route } from "lucide-react";
+import { AlertCircle, Compass, Loader2, Route } from "lucide-react";
 
 import { clarifyTickets, searchTickets } from "@/lib/api";
 import type { AgentResponse, ClarificationChoice, Priority, TripQuery } from "@/lib/types";
@@ -19,7 +19,8 @@ const defaultQuery: TripQuery = {
     lat: 21.0369,
     lng: 105.7897
   },
-  priority: "price"
+  priority: "price",
+  transport_mode: "bus"
 };
 
 function buildApiError(): AgentResponse {
@@ -85,23 +86,23 @@ export default function Home() {
 
   return (
     <main className="app-shell">
-      <header className="topbar" aria-label="SmartBus header">
+      <header className="topbar" aria-label="SmartTravel header">
         <div className="brand-mark" aria-hidden="true">
-          <BusFront size={24} />
+          <Compass size={24} />
         </div>
         <div>
-          <p className="eyebrow">Travel & Hospitality · Day 06 prototype</p>
-          <h1>SmartBus AI</h1>
+          <p className="eyebrow">Travel & Hospitality · AI planning prototype</p>
+          <h1>SmartTravel AI</h1>
         </div>
       </header>
 
-      <section className="workspace" aria-label="SmartBus search workspace">
+      <section className="workspace" aria-label="SmartTravel search workspace">
         <aside className="search-pane">
           <div className="pane-heading">
             <Route aria-hidden="true" size={20} />
             <div>
-              <h2>Tìm vé liên tỉnh</h2>
-              <p>AI xếp hạng theo giá, giờ đi và khoảng cách điểm đón.</p>
+              <h2>Tìm phương án di chuyển</h2>
+              <p>AI gợi ý vé xe, tàu, máy bay theo giá, thời gian và điểm đón thuận tiện.</p>
             </div>
           </div>
 
@@ -114,12 +115,12 @@ export default function Home() {
           />
         </aside>
 
-        <section className="result-pane" aria-label="SmartBus ranked results">
+        <section className="result-pane" aria-label="SmartTravel ranked results">
           {loading ? (
             <div className="empty-state" data-testid="loading-state">
               <Loader2 aria-hidden="true" className="spin" size={28} />
-              <h2>Đang chạy agent Python</h2>
-              <p>Đang tách intent, kiểm tra nhập nhằng và xếp hạng lựa chọn.</p>
+              <h2>Đang chạy SmartTravel agent</h2>
+              <p>Đang đọc tuyến, kiểm tra nguồn dữ liệu và gợi ý phương án phù hợp.</p>
             </div>
           ) : result ? (
             <ResultsList
@@ -131,8 +132,8 @@ export default function Home() {
           ) : (
             <div className="empty-state" data-testid="empty-state">
               <AlertCircle aria-hidden="true" size={28} />
-              <h2>Sẵn sàng so sánh vé</h2>
-              <p>Giữ dữ liệu mặc định để demo nhanh, hoặc đổi tuyến/ngày/điểm đón.</p>
+              <h2>Sẵn sàng lên kế hoạch chuyến đi</h2>
+              <p>Tìm phương tiện di chuyển trước, rồi hỏi trợ lý về lịch trình, điểm chơi và đặt phòng.</p>
             </div>
           )}
         </section>

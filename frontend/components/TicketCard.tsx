@@ -49,7 +49,7 @@ export function TicketCard({ ticket, rank }: TicketCardProps) {
           </a>
           <a data-testid="booking-link" href={ticket.booking_url} rel="noreferrer" target="_blank">
             <Ticket aria-hidden="true" size={16} />
-            Đặt vé
+            Đặt / kiểm tra
             <ArrowUpRight aria-hidden="true" size={14} />
           </a>
         </div>

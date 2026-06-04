@@ -1,10 +1,11 @@
 """
 backend/app/agent/tools.py
 
-Tập hợp các công cụ (tools) dùng cho AI Agent SmartBus.
+Tập hợp các công cụ (tools) dùng cho AI Agent SmartTravel.
 Bao gồm:
-  - Tìm kiếm vé xe nội bộ (mock DB)
-  - Tìm kiếm thực tế qua Tavily (giá vé, nhà xe, chuyến đi)
+  - Tìm kiếm phương án di chuyển nội bộ (mock DB hiện có vé xe)
+  - Tìm kiếm thực tế qua Tavily (vé xe, tàu, máy bay, chuyến đi)
+  - Gợi ý lịch trình, địa điểm du lịch, trải nghiệm và lưu trú từ web
   - Trích xuất thông tin vé từ kết quả Tavily bằng Gemini
   - Phát hiện nhập nhằng điểm đón
   - Tạo link Google Maps & booking
@@ -23,7 +24,7 @@ from backend.app.data.mock_tickets import MOCK_TICKETS
 from backend.app.observability import elapsed_ms, log_json, summarize_text
 from backend.app.schemas import MockTicket, TripQuery, WebSearchResult
 
-logger = logging.getLogger("smartbus.tools")
+logger = logging.getLogger("smarttravel.tools")
 
 
 # ---------------------------------------------------------------------------
@@ -49,6 +50,22 @@ def detect_pickup_ambiguity(pickup_text: str) -> bool:
 
 def search_mock_tickets(query: TripQuery) -> list[MockTicket]:
     start = time.perf_counter()
+
+    if query.transport_mode.value not in ("all", "bus"):
+        log_json(
+            logger,
+            logging.INFO,
+            "tool.search_mock_tickets.skipped",
+            stage="tool",
+            reason="transport_mode_not_in_mock_db",
+            transport_mode=query.transport_mode.value,
+            from_city=query.from_city,
+            to_city=query.to_city,
+            date=query.date,
+            elapsed_ms=elapsed_ms(start),
+        )
+        return []
+
     from_city = normalize_city(query.from_city)
     to_city = normalize_city(query.to_city)
 
@@ -81,6 +98,9 @@ def filter_by_operator(tickets: list[MockTicket], operator_text: str) -> list[Mo
 
 
 def suggest_nearby_dates(query: TripQuery) -> list[str]:
+    if query.transport_mode.value not in ("all", "bus"):
+        return []
+
     from_city = normalize_city(query.from_city)
     to_city = normalize_city(query.to_city)
     dates = {
@@ -100,7 +120,7 @@ def build_maps_link(address: str) -> str:
 def build_booking_deeplink(provider: str, ticket_id: str) -> str:
     """Tạo deep-link đặt vé theo nhà cung cấp và mã vé."""
     provider_slug = normalize_text(provider).replace(" ", "-")
-    return f"https://smartbus.local/book/{provider_slug}/{ticket_id}"
+    return f"https://smarttravel.local/book/{provider_slug}/{ticket_id}"
 
 
 # ---------------------------------------------------------------------------
@@ -179,9 +199,22 @@ def _call_tavily(query: str, max_results: int = 5) -> list[dict]:
 
 
 def _build_ticket_search_query(query: TripQuery) -> str:
+    transport_terms = {
+        "all": "vé xe vé tàu vé máy bay",
+        "bus": "vé xe khách xe limousine nhà xe",
+        "train": "vé tàu hỏa đường sắt ga tàu",
+        "flight": "vé máy bay chuyến bay hãng bay",
+    }
+    provider_terms = {
+        "all": "Vexere Vietnam Airlines Vietjet Traveloka MoMo Đường sắt Việt Nam",
+        "bus": "Vexere MoMo nhà xe limousine",
+        "train": "Đường sắt Việt Nam dsvn vé tàu ga tàu",
+        "flight": "Vietnam Airlines Vietjet Bamboo Traveloka vé máy bay",
+    }
+    mode = query.transport_mode.value
     return (
-        f"vé xe khách {query.from_city} đi {query.to_city} ngày {query.date} "
-        "giá vé nhà xe đặt vé Vexere MoMo Traveloka"
+        f"{transport_terms[mode]} {query.from_city} đi {query.to_city} ngày {query.date} "
+        f"giá vé giờ đi đặt vé {provider_terms[mode]}"
     )
 
 
@@ -215,6 +248,7 @@ def search_web_ticket_sources(query: TripQuery, max_results: int = 5) -> list[We
         from_city=query.from_city,
         to_city=query.to_city,
         date=query.date,
+        transport_mode=query.transport_mode.value,
         result_count=len(web_results),
         elapsed_ms=elapsed_ms(start),
     )
@@ -266,9 +300,9 @@ def _extract_ticket_info_with_llm(raw_results: list[dict], query_context: str) -
             f"Bối cảnh truy vấn: {query_context}\n\n"
             "Dưới đây là các đoạn văn bản thu thập từ web. "
             "Hãy trích xuất và trình bày ngắn gọn theo định dạng danh sách: "
-            "**Nhà xe** | **Giá vé** | **Giờ khởi hành** | **Điểm đón** | **Link đặt vé**. "
+            "**Nhà cung cấp/hãng** | **Loại vé** | **Giá vé** | **Giờ khởi hành** | **Điểm đón/ga/sân bay** | **Link đặt vé**. "
             "Chỉ lấy thông tin thực sự có trong văn bản, bỏ qua những gì không liên quan. "
-            "Nếu không tìm thấy thông tin vé xe nào, nói rõ điều đó.\n\n"
+            "Nếu không tìm thấy thông tin vé xe, tàu hoặc máy bay nào, nói rõ điều đó.\n\n"
             f"Văn bản:\n{snippets}"
         )
 
@@ -317,7 +351,7 @@ def _extract_ticket_info_with_llm(raw_results: list[dict], query_context: str) -
 
 def search_by_date_tool(from_city: str, to_city: str, date: str) -> str:
     """
-    Tìm kiếm giá vé xe, tên nhà xe và chuyến đi trên web (Tavily) theo tuyến đường và ngày.
+    Tìm kiếm giá vé xe, tàu, máy bay và chuyến đi trên web (Tavily) theo tuyến đường và ngày.
     Kết quả được LLM trích xuất thành danh sách gọn.
 
     Args:
@@ -325,11 +359,61 @@ def search_by_date_tool(from_city: str, to_city: str, date: str) -> str:
         to_city:   Thành phố điểm đến (ví dụ: 'Đà Nẵng', 'Nha Trang').
         date:      Ngày đi theo định dạng YYYY-MM-DD (ví dụ: '2026-06-10').
     """
-    query = f"vé xe khách {from_city} đi {to_city} ngày {date} giá vé nhà xe"
-    query_context = f"Tìm vé xe từ {from_city} đến {to_city} ngày {date}"
+    query = f"vé xe tàu máy bay {from_city} đi {to_city} ngày {date} giá vé giờ đi đặt vé"
+    query_context = f"Tìm phương án di chuyển từ {from_city} đến {to_city} ngày {date}"
 
     raw = _call_tavily(query, max_results=5)
     return _extract_ticket_info_with_llm(raw, query_context)
+
+
+def _format_web_sources(raw_results: list[dict], intro: str) -> str:
+    if not raw_results:
+        return "Chưa tìm thấy nguồn web phù hợp. Hãy thử hỏi cụ thể hơn về điểm đến, ngày đi hoặc ngân sách."
+
+    lines = [intro]
+    for idx, result in enumerate(raw_results, 1):
+        title = str(result.get("title") or "Nguồn tham khảo").strip()
+        url = str(result.get("url") or "").strip()
+        content = summarize_text(str(result.get("content") or "").strip(), limit=220)
+        lines.append(f"{idx}. **{title}**")
+        if content:
+            lines.append(f"   {content}")
+        if url:
+            lines.append(f"   {url}")
+
+    lines.append("Hãy mở nguồn phù hợp để xác nhận thông tin mới nhất trước khi đặt dịch vụ.")
+    return "\n".join(lines)
+
+
+def search_travel_guide_tool(destination_or_question: str, date: str = "", interests: str = "") -> str:
+    """
+    Tìm nguồn web để gợi ý lịch trình, tiện ích, địa điểm du lịch, ăn uống và trải nghiệm.
+
+    Args:
+        destination_or_question: Điểm đến hoặc câu hỏi du lịch của người dùng.
+        date: Ngày đi nếu có.
+        interests: Sở thích, ngân sách hoặc kiểu trải nghiệm nếu có.
+    """
+    query = (
+        f"{destination_or_question} {date} {interests} "
+        "lịch trình du lịch địa điểm tham quan ăn uống trải nghiệm khách sạn"
+    ).strip()
+    raw = _call_tavily(query, max_results=5)
+    return _format_web_sources(raw, "Tôi tìm thấy một số nguồn để lên lịch trình và chọn trải nghiệm:")
+
+
+def search_stay_options_tool(destination: str, date: str = "", budget: str = "") -> str:
+    """
+    Tìm nguồn web về khách sạn, homestay, khu vực lưu trú và đặt phòng.
+
+    Args:
+        destination: Điểm đến hoặc khu vực muốn lưu trú.
+        date: Ngày nhận phòng nếu có.
+        budget: Ngân sách hoặc hạng phòng nếu có.
+    """
+    query = f"{destination} {date} {budget} khách sạn homestay đặt phòng khu vực lưu trú review".strip()
+    raw = _call_tavily(query, max_results=5)
+    return _format_web_sources(raw, "Tôi tìm thấy một số nguồn tham khảo cho lưu trú và đặt phòng:")
 
 
 def search_and_format_tickets(
@@ -341,7 +425,8 @@ def search_and_format_tickets(
     user_lng: float = 105.7897,
 ) -> str:
     """
-    Tìm kiếm và xếp hạng vé xe khách từ cơ sở dữ liệu nội bộ.
+    Tìm kiếm và xếp hạng phương án di chuyển từ cơ sở dữ liệu nội bộ.
+    Dữ liệu mock hiện có một số tuyến xe khách để demo.
     Các thành phố hợp lệ: 'Ha Noi', 'Da Nang', 'Hue', 'Nha Trang', 'Ho Chi Minh'.
     Định dạng ngày: YYYY-MM-DD (ví dụ: 2026-06-06).
     Thứ tự ưu tiên: 'price' (giá rẻ nhất), 'time' (khởi hành sớm nhất),
@@ -368,8 +453,7 @@ def search_and_format_tickets(
 
     if response.web_results:
         result = (
-            f"Chưa có vé trong database nội bộ cho chặng {from_city} → {to_city} ngày {date}.\n"
-            "Tôi tìm thấy các nguồn web nên bạn có thể mở để kiểm tra giá/giờ còn chỗ:\n\n"
+            f"Tôi tìm thấy nguồn web cho chặng {from_city} → {to_city} ngày {date}:\n\n"
         )
         for idx, source in enumerate(response.web_results, 1):
             result += f"{idx}. **{source.title}**\n   {source.url}\n"
@@ -384,12 +468,12 @@ def search_and_format_tickets(
     if response.path == "failure":
         dates_str = ", ".join(response.suggested_dates) if response.suggested_dates else "không có"
         return (
-            f"Không tìm thấy vé xe cho chặng {from_city} → {to_city} ngày {date}.\n"
-            f"Các ngày gần nhất có vé: {dates_str}."
+            f"Không tìm thấy phương án di chuyển trong dữ liệu nội bộ cho chặng {from_city} → {to_city} ngày {date}.\n"
+            f"Các ngày gần nhất có dữ liệu: {dates_str}."
         )
 
     result = (
-        f"Đã tìm thấy {len(response.tickets)} vé phù hợp nhất "
+        f"Đã tìm thấy {len(response.tickets)} phương án phù hợp nhất "
         f"({from_city} → {to_city}, {date}, ưu tiên: {p.value}):\n\n"
     )
     for idx, t in enumerate(response.tickets, 1):

@@ -1,1 +1,1 @@
-"""SmartBus AI backend package."""
+"""SmartTravel AI backend package."""
