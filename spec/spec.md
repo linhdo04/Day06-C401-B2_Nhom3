@@ -147,7 +147,7 @@ Kết quả cần thấy:
 | Thành viên | Phụ trách | Artifact cần giải thích khi demo |
 |---|---|---|
 | Lê Hoài Nam | Tổng hợp SPEC, rà lại hướng SmartTravel AI, backend tools | `spec/spec.md`, `backend/app/agent/tools.py`, demo flow |
-| Đỗ Thiện Lĩnh | Giữ repo, git control, task tracking, điều phối vai trò  | README, cấu trúc repo, git history/task tracking |
+| Đỗ Thiện Lĩnh | Giữ repo, git control, task tracking, build docker điều phối vai trò  | README, cấu trúc repo, git history/task tracking |
 | Đào Xuân Bách | Backend and frontend base, bug fix, transpose idea  | `backend/app/main.py`, `frontend/app/page.tsx`, luồng kết nối frontend-backend |
 | Nguyễn Đức Kiên Trung | Frontend form tìm kiếm và control ưu tiên, chat assistant  | `frontend/components/SearchForm.tsx`, `frontend/components/PriorityControl.tsx`, `frontend/components/ChatAssistant.tsx`, `frontend/app/api/chat/route.ts` |
 | Phan Quốc Anh | Backend feature, research, idea  | `backend/app/schemas.py`, `backend/app/agent/service.py`, `backend/app/agent/ranking.py`, `02-group-spec/evidence-pack.md` |
